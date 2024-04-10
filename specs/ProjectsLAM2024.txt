@@ -1,0 +1,103 @@
+The Project: “Your city is listening to”
+Overview
+In the following project, the student is required to implement an interactive
+application that crowd-sources the music that is played throughout its city.
+The app will allow its users to authenticate and record audio files from the
+smartphone’s microphone. Each audio will be geo-tagged and sent to a backend service, NOT developed by the student, that will answer back with details
+on the audio that has just being sent. The details received on an audio include
+information such as the music genre, the instruments detected, and so on. A
+user will be able to see the audios uploaded by other users in the map of its city
+and interact with it.
+The endpoint of the back-end is described throughout the document, alongside
+examples of requests using cURL 2 . Each endpoint that might answer with code
+400 requires authentication, which needs to be supplied through the header
+Authentication using Bearer <token>. Description on how to obtain the
+token are in the section below. The app MUST implement the features listed
+below to be sufficient. Adding features is strongly encouraged and has good
+repercussions in the evaluation. A project that follows the specifications to its
+minimum but has no extra feature cannot reach high grades.
+Authentication
+The app has to interact with the provided back-end to allow its user to sign-up.
+The user must be able to log-out from the system and log-in again by using the
+password created during the sign-up phase. A description of the REST endpoint
+responsible for the signup phase is provided below in Table 1.
+
+
+
+
+Record and upload audio
+The user must be able to record an audio through the use use of the microphone
+of its phone, similarly to Shazam 3 . Before proceeding with the upload, the
+user must be able to check the audio s/he recorded and repeat the process, if
+needed. If the user is connected through a mobile network, it must be possible
+to postpone the upload once a Wi-Fi connection is available. The user will
+receive a notification once the connection is available and the upload can be
+performed cheaply and safely. A description of the REST endpoint responsible
+for the audio upload is provided in Table 6.
+
+
+Table 4: Description of the upload endpoint.
+The response received contains whether the upload has been performed
+successfully and information on the audio content (described in Table 5). The
+app must save locally this information and the user must be able to access it in
+order to see its contributions, even without a connection.
+Management of uploaded songs
+The user must be able to see the songs s/he uploaded through the app, see the
+information the backend extracted on each song and interact with each song
+by hiding it from other users or displaying it again. The information must be
+saved locally and the user must be able to inspect them at will even without
+a connection. Note that once a song is uploaded, it will not be possible to
+download them from the back-end. The app must save the audio file locally, so
+that the user can listen them again. To obtain all the songs uploaded by a user,
+the app must use the API of Table 6.
+A user can hide one of its uploaded songs by using the API in Table 7 and
+show it using the API in Table 8.
+Finally, a user can delete a song, which will be completely erased from the
+backend, by using the endpoint of Table 9.
+Map
+Table 10 describes the API to obtain all the songs uploaded by other users
+and their location. The app must display each song in a map. Note that the
+endpoint does not return any of the tags associated with a song. The app must
+obtain those information using the API of Table 11. Since many songs might be available in the database of the backend, the app MUST NOT fetch the
+details of every song in the database. Instead, the user must be able to click in
+a marker and see its details. An optional extension, which allows achieving a
+better grade, it to automatically fetch the details of each marker once a zoom
+level is reached. For example, if the user zooms into the maps and sees only
+5 markers, then the app automatically retrieves the information for each song
+displayed in the map. In that case, the user can filter the songs based on the
+features of Table 5. For example, only visualizing the locations for dance music.
+Project Integration for 2 people
+In the case of a project for 2 people, students must implement also the following
+additional feature: it must be possible for the user to find the places that for
+which a recording can be made along a path. For example, if the user has to
+go from Piazza Maggiore to Porta San Donato, s/he must be able to use the
+app to find places along the path to San Donato that involve locations (e.g.
+bars, stores, etc. The students can freely choose at least 3 types of locations)
+for which a recording can be made. The user can choose which locations to
+visit, which will be shown on the map alongside the path to take. Places that
+do not have any audio geo-tagged in that location should be prioritized and
+recommended to the user.
+In order to find the path and the places along it, there are two possibilities:
+• Rely on Google Maps APIs. In particular, by using the Routes API 4
+it is possible to find the path from two locations while the through the
+Places API 5 is is possible to retrieve relevant locations (bars etc.) along
+it. Note that Maps API are not free 6 . It is possible to obtain 200$ worth
+of credits for free each month, which are sufficient for the sake of the exam.
+Nonetheless, students that choose to use Google’s APIs are expected to
+properly handle the credits, for example by limiting the number of requests
+that can be done daily or by displaying to the user the number of remaining
+searches that can be done for free.
+• Rely on OpenStreetMaps (OSM). To overcome the payment to Google,
+students can rely on OSM, which is a free and open source map effort.
+Albeit no costs are involved, OSM APIs are less easy to use when compared
+to Google’s ones. The official documentation provides a set of APIs that
+can be used 7 but they might not be sufficient to find paths and relevant
+places. Students can rely on other free services that work on top of OSM
+to provide those features 8 . For example, the Google’s Route API can
+be replaced by using OpenRouteService 9 , where an API key (with little
+limitation) can be obtained for free. Similarly, Google’s Places API can
+be replaced by using Overpass Turbo 10 .
+Both Google Maps and OSM are equivalent for the sake of the exams. In
+both approaches, students have to autonomously obtain access to the API and
+figure out how to use them. Regardless of the choice, it is important that during
+the exam it will be possible to test the feature.
