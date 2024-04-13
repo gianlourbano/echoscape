@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native";
 
 export default function AuthLayout() {
     return (
-        <SafeAreaView>
+        <SafeAreaView className="bg-gray-800">
             <Slot />
         </SafeAreaView>
     );

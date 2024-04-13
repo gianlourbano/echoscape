@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from "react-native";
 
 import NetInfo from '@react-native-community/netinfo';
 import { useEffect, useState } from "react";
+import { Image } from "react-native";
 
 export default function Page() {
 
@@ -24,8 +25,9 @@ export default function Page() {
   return (
     <View style={styles.container}>
       <View style={styles.main}>
-        <Text style={styles.title}>Hello World</Text>
-        <Text className="">{isConnected ? "Connected!" : "Not connected :/"}</Text>
+        <Image source={require("../../assets/image.png")} className="self-center" />
+        <Text style={styles.title}>Map goes here</Text>
+        <Text className="">Connection status: {isConnected ? "Connected!" : "Not connected :/"}</Text>
         <Link href="/second" style={styles.subtitle}>
           Next
         </Link>

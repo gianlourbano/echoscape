@@ -1,6 +1,6 @@
 import { Link } from "expo-router";
 import { useState } from "react";
-import { View, TextInput, SafeAreaView } from "react-native";
+import { View, TextInput } from "react-native";
 import { Button, Text } from "react-native-paper";
 
 const LoginPage = () => {
@@ -25,7 +25,7 @@ const LoginPage = () => {
     };
 
     return (
-        <View className="p-6 flex flex-col gap-2">
+        <View className="p-6 flex flex-col gap-2 bg-gray-800 text-white h-full">
             <Text className=" text-xl self-center">Login Page</Text>
 
             <View className="flex flex-col gap-2 m-4 text-white">
