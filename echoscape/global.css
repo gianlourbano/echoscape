@@ -1,3 +1,12 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+test {
+    color:   - #384259
+    - #ffffff
+    - #4c5978
+    - #242b3a
+    - #e6e6e6
+    - #5f7098
+}

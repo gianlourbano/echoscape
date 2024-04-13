@@ -27,7 +27,8 @@
     "tailwindcss": "^3.4.3",
     "expo-av": "~13.10.5",
     "@react-native-community/netinfo": "11.1.0",
-    "expo-system-ui": "~2.9.3"
+    "expo-system-ui": "~2.9.3",
+    "@react-native-async-storage/async-storage": "1.21.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
