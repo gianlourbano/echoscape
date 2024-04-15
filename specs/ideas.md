@@ -9,7 +9,7 @@
 
 **User Interface and User Experience (UI/UX) Enhancements:**
 
-* **Improved Audio Recording Interface:**  Design a user-friendly interface for recording audio, including options to adjust recording length, visualize sound levels, and add basic editing functionalities (trimming silence).
+* **Improved Audio Recording Interface:**  Design a user-friendly interface for recording audio, including options to adjust recording length, visualize sound levels, and add basic editing functionalities (trimming silence). Record audio button on long press opens a menu with eventual options (start recording and end it after x seconds without having to press again the button, etc)
 * **Interactive Map:** Implement features on the map view like clustering markers for better visualization in dense areas, allowing users to zoom in and out for detailed exploration, or displaying heatmaps to represent areas with high music activity.
 * **Offline Functionality:** Enhance the offline experience by allowing users to see their uploaded songs and explore previously viewed areas on the map even without an internet connection.
 * **Advanced Search and Filtering (local):**  While you can't filter based on backend data, allow users to search and filter their own uploaded songs based on local information you store, such as creation date or location.
