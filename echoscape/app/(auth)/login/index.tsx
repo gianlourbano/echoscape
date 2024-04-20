@@ -1,3 +1,4 @@
+import { useAuth } from "@/utils/auth/AuthProvider";
 import { Link } from "expo-router";
 import { useState } from "react";
 import { View, TextInput } from "react-native";
@@ -7,22 +8,7 @@ const LoginPage = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
 
-    const handleLogin = () => {
-        fetch(`http://130.136.2.83/auth/token`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: `username=${username}&password=${password}`
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log(JSON.stringify(data, null, 2));
-            })
-            .catch((err) => {
-                console.error(JSON.stringify(err, null, 2));
-            });
-    };
+    const { dispatch, status } = useAuth();
 
     return (
         <View className="p-6 flex flex-col gap-2 bg-gray-800 text-white h-full">
@@ -44,7 +30,13 @@ const LoginPage = () => {
                     onChangeText={setPassword}
                 />
             </View>
-            <Button onPress={handleLogin}>Login</Button>
+            <Text>{status}</Text>
+            <Button onPress={() => {
+                dispatch("login", {
+                    username, password
+                })
+            }}>Login</Button>
+            <Link href="/register">Register</Link>
             <Link href="/">Go Home!</Link>
 
         </View>

@@ -9,7 +9,6 @@ import {Tabs as MaterialBottomTabs} from "expo-router/tabs"
 
 export default function App() {
     return (
-        <PaperProvider>
             <View className="flex justify-center flex-1">
                 <MaterialBottomTabs
                     initialRouteName="index"
@@ -132,6 +131,5 @@ export default function App() {
                     
                 </MaterialBottomTabs>
             </View>
-        </PaperProvider>
     );
 }
