@@ -5,6 +5,8 @@
 
 import { useState, useEffect } from 'react'
 import { Audio } from 'expo-av'
+import * as FileSystem from 'expo-file-system'
+import { getUserBaseURI } from '@/utils/fs/fs'
 
 
 
@@ -97,6 +99,16 @@ export function useRecordSound() {
 
         const uri = recording.getURI()
         console.log('useRecordSound: Recording stopped and stored at', uri)
+
+        const dir = await getUserBaseURI()
+
+        await FileSystem.copyAsync({
+            from: uri,
+            to: dir + `/recording-${Date.now()}.wav`,
+            
+        })
+
+        
 
 
         return uri

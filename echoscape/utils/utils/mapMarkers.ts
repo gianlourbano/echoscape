@@ -1,29 +1,33 @@
 import { LatLng } from "leaflet";
 import { MapMarker } from "@charlespalmerbf/react-native-leaflet-js";
 
-
-
-
-
-
-export function createMapMarker(lat: number, lng: number, icon?: number, size?: number[]): MapMarker;
-export function createMapMarker(position: LatLng, icon?: number, size?: number[]): MapMarker;
-
+export function createMapMarker(
+    lat: number,
+    lng: number,
+    icon?: number,
+    size?: number[]
+): MapMarker;
+export function createMapMarker(
+    position: LatLng,
+    icon?: number,
+    size?: number[]
+): MapMarker;
 
 /*
 serve più che altro a non dover copiare e incollare tutte le volte le emoji
 size impostato di default a [32, 32]
 */
-export function createMapMarker(latOrPosition: number | LatLng, 
-                                lngOrIcon?: number | undefined, 
-                                iconOrSize?: number | number[], 
-                                size?: number[]): MapMarker {
-
+export function createMapMarker(
+    latOrPosition: number | LatLng,
+    lngOrIcon?: number | undefined,
+    iconOrSize?: number | number[],
+    size?: number[]
+): MapMarker {
     let lat: number;
     let lng: number;
     let icon: number | undefined;
-    
-    if (typeof latOrPosition === 'number' && typeof lngOrIcon === 'number') {
+
+    if (typeof latOrPosition === "number" && typeof lngOrIcon === "number") {
         lat = latOrPosition;
         lng = lngOrIcon;
         icon = iconOrSize as number | undefined;
@@ -33,16 +37,19 @@ export function createMapMarker(latOrPosition: number | LatLng,
         icon = lngOrIcon as number | undefined;
     }
 
-
-    let selectedIcon = ""
-    switch(icon) {
+    let selectedIcon = "";
+    switch (icon) {
         case 1:
-            selectedIcon = "📍"
-            break
+            selectedIcon = `<div className="size-32 bg-red-500"></div>`;
+            break;
         //more icons can be added
         default:
-            selectedIcon = "📍"
+            selectedIcon = "📍";
     }
-    
-    return {position: {lat: lat, lng: lng}, icon: selectedIcon, size: size ? size : [32, 32]}
+
+    return {
+        position: { lat: lat, lng: lng },
+        icon: selectedIcon,
+        size: size ? size : [32, 32],
+    };
 }
