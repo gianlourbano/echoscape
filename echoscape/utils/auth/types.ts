@@ -13,7 +13,6 @@ export type Action =
     | "login"
     | "logout"
     | "refresh"
-    | "loading"
 
 export type AuthStatus =
     | "loading"

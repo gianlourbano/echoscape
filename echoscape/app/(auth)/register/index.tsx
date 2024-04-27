@@ -3,9 +3,15 @@ import { useState } from "react";
 import { View, TextInput } from "react-native";
 import { Button, Text } from "react-native-paper";
 
+import * as FileSystem from "expo-file-system";
+import { getUserBaseURI } from "@/utils/fs/fs";
+import { useAuth } from "@/utils/auth/AuthProvider";
+
 const RegisterPage = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+
+    const { dispatch } = useAuth();
 
     const handleRegister = () => {
         fetch(`http://130.136.2.83/auth`, {
@@ -18,6 +24,7 @@ const RegisterPage = () => {
             .then((res) => res.json())
             .then((data) => {
                 console.log(JSON.stringify(data, null, 2));
+                dispatch("login", { username, password });
             })
             .catch((err) => {
                 console.error(JSON.stringify(err, null, 2));

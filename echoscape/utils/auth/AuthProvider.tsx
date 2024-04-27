@@ -12,6 +12,8 @@ import {
 } from "./types";
 import { useRouter } from "expo-router";
 
+import * as FileSystem from "expo-file-system";
+
 const [AuthProvider_, useAuth] = createStrictContext<AuthContext>(undefined);
 
 const getToken = async (payload: { username: string; password: string }) => {
@@ -25,7 +27,10 @@ const getToken = async (payload: { username: string; password: string }) => {
 
     const data = await res.json();
 
-    console.log(res.status);
+    if(res.status !== 200) {
+        console.log("Error while fetching token");
+        return {error: "invalid-credentials"};
+    }
 
     await ss_save("token", data.client_secret);
     await ss_save(
@@ -42,20 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const router = useRouter();
 
-    const [isConnected, setIsConnected] = useState<boolean | null>(false);
-
-    useEffect(() => {
-        const unsubscribe = NetInfo.addEventListener((state) => {
-            console.log("Connection type", state.type);
-            console.log("Is connected?", state.isConnected);
-            setIsConnected(state.isConnected);
-        });
-
-        return () => {
-            unsubscribe();
-        };
-    }, []);
-
     const authDispatchAsync = useCallback(
         async (
             action: Action,
@@ -63,12 +54,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         ): Promise<AuthDispatchMsgCode | undefined> => {
             switch (action) {
                 case "refresh": {
+                    setAuthStatus("loading");
                     console.log("trying to refresh token...");
                     if (authStatus === "authenticated") {
                         const username = await ss_get("username");
                         const password = await ss_get("password");
 
-                        if(!username || !password) {
+                        if (!username || !password) {
                             return authDispatchAsync("logout");
                         }
 
@@ -107,6 +99,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     }
 
                     const data = await getToken(payload);
+                    if(data.error) {
+                        setAuthStatus("error-invalid-credentials");
+                        return "LOGIN_FAILED";
+                    }
 
                     await ss_save("id", String(data.client_id));
                     await ss_save("username", payload.username);
@@ -118,6 +114,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     console.log(token);
                     console.log(lastUpdate);
 
+                    await FileSystem.makeDirectoryAsync(
+                        FileSystem.documentDirectory + `user-${payload.username}`, {
+                            intermediates: true
+                        }
+                    );
+
                     setAuthStatus("authenticated");
                     router.navigate("/");
                     return "LOGIN_SUCCESFUL";
@@ -127,8 +129,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         []
     );
 
-    const withAuthFetch = useCallback(
-        async (url: string, options: RequestInit): Promise<Response | undefined> => {
+    const withAuthFetch: typeof fetch = useCallback(
+        async (
+            url: URL | RequestInfo,
+            options: RequestInit | undefined
+        ): Promise<Response> => {
             const token = await ss_get("token");
             const lastUpdate = await ss_get("lastUpdate");
 
@@ -146,14 +151,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 console.log(`Refreshing token (status ${statusCode})`);
                 if (statusCode === "REFRESH_SUCCESFUL")
                     return withAuthFetch(url, options);
-                else 
-                    return undefined;
+                else
+                    return new Response("error-token-refresh", { status: 502 });
             }
 
             return fetch(url, {
                 ...options,
                 headers: {
-                    ...options.headers,
+                    ...options?.headers,
                     Authorization: `Bearer ${token}`,
                 },
             }).then(async (res) => {
