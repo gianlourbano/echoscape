@@ -95,7 +95,6 @@ const Audio = ({ index, name, refresh }: AudioProps) => {
     const [isPlaying, setIsPlaying] = useState(false);
 
     const getProgress = useCallback((status: AVPlaybackStatus) => {
-
         if (status.isLoaded) {
             if (status.didJustFinish) {
                 console.log("finished");
@@ -116,6 +115,10 @@ const Audio = ({ index, name, refresh }: AudioProps) => {
 
     const [date, time] = extractDate(extractFileName(name));
 
+    useEffect(() => {
+        if (isPlaying) playSound({ uri: name });
+    }, [isPlaying]);
+
     return (
         <View>
             <View className="bg-gray-300 p-4 rounded-t-lg flex flex-row  items-center">
@@ -135,7 +138,6 @@ const Audio = ({ index, name, refresh }: AudioProps) => {
                         iconColor="green"
                         onPress={() => {
                             setIsPlaying(true);
-                            playSound({ uri: name });
                         }}
                     />
                     <IconButton
@@ -163,7 +165,7 @@ const Audio = ({ index, name, refresh }: AudioProps) => {
                     }}
                     animate={{
                         width: `${progress * 100}%`,
-                        opacity: isPlaying ?  1 : 0,
+                        opacity: isPlaying ? 1 : 0,
                     }}
                     transition={{
                         type: "timing",

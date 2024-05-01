@@ -1,14 +1,7 @@
-
-
-
-
-
-import { useState, useEffect } from 'react'
-import { AVPlaybackStatus, Audio } from 'expo-av'
-import * as FileSystem from 'expo-file-system'
-import { getUserBaseURI } from '@/utils/fs/fs'
-
-
+import { useState, useEffect } from "react";
+import { AVPlaybackStatus, Audio } from "expo-av";
+import * as FileSystem from "expo-file-system";
+import { getUserBaseURI } from "@/utils/fs/fs";
 
 /*
 hook to play an audio
@@ -18,37 +11,42 @@ when sound changes or when component unmounts unloads the audio, to prevent memo
 usage:
     const playSound = usePlaySound()
 */
-export function usePlaySound(onPlayBackStatusUpdate?: (status: AVPlaybackStatus) => void) {
-  const [sound, setSound] = useState<Audio.Sound | null>(null)
+export function usePlaySound(
+    onPlayBackStatusUpdate?: (status: AVPlaybackStatus) => void
+) {
+    const [sound, setSound] = useState<Audio.Sound | null>(null);
 
-  async function playSound(file: any) {
-    console.log(`usePlaySound: Loading Sound (${file})`)
-    const { sound } = await Audio.Sound.createAsync(file, { shouldPlay: true }, onPlayBackStatusUpdate)
-    setSound(sound)
+    async function playSound(file: any) {
+        console.log(`usePlaySound: Loading Sound (${file})`);
+        const { sound } = await Audio.Sound.createAsync(
+            file,
+            { shouldPlay: true },
+            onPlayBackStatusUpdate
+        );
+        setSound(sound);
 
-    console.log('usePlaySound: Playing Sound')
-    await sound.playAsync()
-  }
+        console.log("usePlaySound: Playing Sound");
+        await sound.playAsync();
 
-  useEffect(() => {
-    return sound
-      ? () => {
-          console.log('usePlaySound: Unloading Sound')
-          sound.unloadAsync()
-        }
-      : undefined
-  }, [sound])
+        //unloads sound right after playing it
+        //sound.unloadAsync();
+    }
 
-  return playSound
+    useEffect(() => {
+        return sound
+            ? () => {
+                  console.log("usePlaySound: Unloading Sound");
+                  sound.unloadAsync();
+              }
+            : undefined;
+    }, [sound]);
+
+    return playSound;
 }
 
 /*
 considerazioni: file è di tipo any perchè non so bene che tipo siano i file
 */
-
-
-
-
 
 /*
 hook to record audios from device
@@ -59,60 +57,57 @@ usage:
     const { startRecording, stopRecording } = useRecordSound()
 */
 export function useRecordSound() {
-
-    const [recording, setRecording] = useState<Audio.Recording | undefined>()
+    const [recording, setRecording] = useState<Audio.Recording | undefined>();
 
     async function startRecording() {
         try {
-            console.log('useRecordSound: Requesting permission..')
-            const permissionResponse = await Audio.requestPermissionsAsync()
+            console.log("useRecordSound: Requesting permission..");
+            const permissionResponse = await Audio.requestPermissionsAsync();
             if (!permissionResponse.granted) {
-                throw new Error('Permission not granted')
+                throw new Error("Permission not granted");
             }
 
             await Audio.setAudioModeAsync({
                 allowsRecordingIOS: true,
                 playsInSilentModeIOS: true,
-            })
+            });
 
-            console.log('useRecordSound: Starting recording..')
-            const { recording } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY)
-            setRecording(recording)
-            console.log('useRecordSound: Recording started')
+            console.log("useRecordSound: Starting recording..");
+            const { recording } = await Audio.Recording.createAsync(
+                Audio.RecordingOptionsPresets.HIGH_QUALITY
+            );
+            setRecording(recording);
+            console.log("useRecordSound: Recording started");
         } catch (err) {
-            console.error('useRecordSound: Failed to start recording', err)
+            console.error("useRecordSound: Failed to start recording", err);
         }
     }
 
     async function stopRecording() {
-        console.log('useRecordSound: Stopping recording..')
+        console.log("useRecordSound: Stopping recording..");
         if (!recording) {
-            console.error('useRecordSound: No recording to stop')
-            return
+            console.error("useRecordSound: No recording to stop");
+            return;
         }
 
-        setRecording(undefined)
-        await recording.stopAndUnloadAsync()
+        setRecording(undefined);
+        await recording.stopAndUnloadAsync();
         await Audio.setAudioModeAsync({
             allowsRecordingIOS: false,
-        })
+        });
 
-        const uri = recording.getURI()
-        console.log('useRecordSound: Recording stopped and stored at', uri)
+        const uri = recording.getURI();
+        console.log("useRecordSound: Recording stopped and stored at", uri);
 
-        const dir = await getUserBaseURI()
+        const dir = await getUserBaseURI();
 
         await FileSystem.copyAsync({
             from: uri,
             to: dir + `/recording-${Date.now()}.wav`,
-            
-        })
+        });
 
-        
-
-
-        return uri
+        return uri;
     }
 
-    return { startRecording, stopRecording }
+    return { startRecording, stopRecording };
 }
