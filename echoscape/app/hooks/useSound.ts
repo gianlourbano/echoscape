@@ -4,7 +4,7 @@
 
 
 import { useState, useEffect } from 'react'
-import { Audio } from 'expo-av'
+import { AVPlaybackStatus, Audio } from 'expo-av'
 import * as FileSystem from 'expo-file-system'
 import { getUserBaseURI } from '@/utils/fs/fs'
 
@@ -18,12 +18,12 @@ when sound changes or when component unmounts unloads the audio, to prevent memo
 usage:
     const playSound = usePlaySound()
 */
-export function usePlaySound() {
+export function usePlaySound(onPlayBackStatusUpdate?: (status: AVPlaybackStatus) => void) {
   const [sound, setSound] = useState<Audio.Sound | null>(null)
 
   async function playSound(file: any) {
-    console.log('usePlaySound: Loading Sound')
-    const { sound } = await Audio.Sound.createAsync(file)
+    console.log(`usePlaySound: Loading Sound (${file})`)
+    const { sound } = await Audio.Sound.createAsync(file, { shouldPlay: true }, onPlayBackStatusUpdate)
     setSound(sound)
 
     console.log('usePlaySound: Playing Sound')

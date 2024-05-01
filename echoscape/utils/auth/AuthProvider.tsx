@@ -129,10 +129,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         []
     );
 
-    const withAuthFetch: typeof fetch = useCallback(
+    const withAuthFetch = useCallback(
         async (
             url: URL | RequestInfo,
-            options: RequestInit | undefined
+            options: RequestInit | undefined,
+            _fetch = fetch
         ): Promise<Response> => {
             const token = await ss_get("token");
             const lastUpdate = await ss_get("lastUpdate");
@@ -155,7 +156,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     return new Response("error-token-refresh", { status: 502 });
             }
 
-            return fetch(url, {
+            return _fetch(url, {
                 ...options,
                 headers: {
                     ...options?.headers,

@@ -37,27 +37,24 @@ export default function Page() {
             setMarkers((prev) => [...prev, createMapMarker(lat, lng, icon)]);
         },
         []
-    );
+    );typeof fetch
 
+    const { dispatch, status, withAuthFetch} = useAuth();
     
 
     useEffect(() => {
         getCurrentPosition().then((loc) => {
+
+            withAuthFetch("http://130.136.2.83/audio/all").then((data) => 
+                data.json()
+            ).then((data) => {
+                console.log(data);
+                data.forEach((audio: { id: number, latitude: number, longitude: number }) => addMapMarker(audio.latitude, audio.longitude));
+            })
+
             if (loc) {
                 setLocation(loc);
                 addMapMarker(loc.coords.latitude, loc.coords.longitude);
-
-                setMarkers((prev) => [
-                    ...prev,
-                    {
-                        position: {
-                            lat: loc.coords.latitude + 0.01,
-                            lng: loc.coords.longitude + 0.01,
-                        },
-                        icon: "<Marker />",
-
-                    },
-                ]);
             }
         });
     }, []);

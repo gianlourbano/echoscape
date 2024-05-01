@@ -44,14 +44,6 @@ export default function Page() {
         setRecordedAudioUri(uri);
     }
 
-    /*const position1: LatLng = {
-    lat: 37.78825,
-    lng: -122.4324,
-  }
-  const mark: MapMarker = createMapMarker(position1)
-  const mapMarkers = [mark]
-  */
-
     const [testText, setTestText] = useState("valore iniziale");
     const [testLocation, setTestLocation] = useState<Location.LocationObject>();
 
@@ -77,20 +69,7 @@ export default function Page() {
         }
     }
 
-    const [recordings, setRecordings] = useState<string[]>([]);
-
-    async function loadRecordings() {
-        const dir = await getUserBaseURI();
-        const recordings = await FileSystem.readDirectoryAsync(dir);
-        console.log("recordings: ", recordings);
-        setRecordings(recordings.map((recording) => dir + "/" + recording));
-    }
-
-    const {dispatch } = useAuth();
-
-    useEffect(() => {
-        loadRecordings();
-    }, []);
+   
 
     return (
         <View style={styles.container}>
@@ -103,7 +82,7 @@ export default function Page() {
 
                 <ConditionalButton
                     Button1={
-                        <Button onPress={stopRecordButton}>
+                        <Button onPress={() => {stopRecordButton()}}>
                             finisci registrazione
                         </Button>
                     }
@@ -126,48 +105,7 @@ export default function Page() {
                     riproduci suono
                 </Button>
 
-                <Text style={styles.subtitle}>
-                    This is the first page of your app.
-                </Text>
-
-                <Button onPress={async () => {
-                    // const username = await getUserBaseURI();
-                    // await FileSystem.makeDirectoryAsync(username, {intermediates: true});
-                    // console.log("username: ", username);
-                    
-                    loadRecordings();
                 
-                }}>PRESS ME MF!</Button>
-
-                <Button onPress={() => dispatch("logout")}>Logout</Button>
-
-                <View>
-                    {recordings.map((recording, index) => {
-                        return (
-                            <View key={index}>
-                                <Text>{recording}</Text>
-                                <Button
-                                    onPress={() =>
-                                        playSound({
-                                            uri:
-                                                recording,
-                                        })
-                                    }
-                                >
-                                    riproduci
-                                </Button>
-                                <Button
-                                    onPress={() =>
-                                        FileSystem.deleteAsync(recording)
-                                    }
-                                    className="text-red-500"
-                                >
-                                    elimina
-                                </Button>
-                            </View>
-                        );
-                    })}
-                </View>
             </View>
         </View>
     );

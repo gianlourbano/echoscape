@@ -33,7 +33,8 @@ export type AuthContext = {
     ) => Promise<AuthDispatchMsgCode | undefined>;
     withAuthFetch: (
         url: string,
-        options: RequestInit
+        options?: RequestInit,
+        _fetch?: typeof fetch
     ) => Promise<Response | undefined>;
     //user: UserData | undefined;
 };
