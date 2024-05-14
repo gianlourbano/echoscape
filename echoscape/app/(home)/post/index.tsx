@@ -19,6 +19,8 @@ import { ss_get } from "@/utils/secureStore/SStore";
 import { getUserBaseURI } from "@/utils/fs/fs";
 import { useAuth } from "@/utils/auth/AuthProvider";
 
+import { Image } from "expo-image";
+
 export default function Page() {
     const playSound = usePlaySound();
     const { startRecording, stopRecording } = useRecordSound();
@@ -69,11 +71,20 @@ export default function Page() {
         }
     }
 
-   
-
     return (
         <View style={styles.container}>
             <View style={styles.main}>
+                <Image
+                    source="https://picsum.photos/seed/696/3000/2000"
+                    className="flex-1 w-full h-96"
+                    contentFit="cover"
+                    transition={1000}
+                    placeholder={{
+                        blurhash:
+                            "|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj[",
+                    }}
+                />
+
                 <Text style={styles.title}>Hello World</Text>
 
                 <Button mode="contained" onPress={testFunction}>
@@ -82,7 +93,11 @@ export default function Page() {
 
                 <ConditionalButton
                     Button1={
-                        <Button onPress={() => {stopRecordButton()}}>
+                        <Button
+                            onPress={() => {
+                                stopRecordButton();
+                            }}
+                        >
                             finisci registrazione
                         </Button>
                     }
@@ -104,8 +119,6 @@ export default function Page() {
                 >
                     riproduci suono
                 </Button>
-
-                
             </View>
         </View>
     );

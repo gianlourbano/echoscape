@@ -9,10 +9,7 @@ export type AuthDispatchMsgCode =
     | "ERROR";
 
 export type Error = string;
-export type Action =
-    | "login"
-    | "logout"
-    | "refresh"
+export type Action = "login" | "logout" | "refresh";
 
 export type AuthStatus =
     | "loading"

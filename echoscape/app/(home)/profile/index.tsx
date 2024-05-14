@@ -9,6 +9,7 @@ import { usePlaySound } from "@/app/hooks/useSound";
 import { AVPlaybackStatus } from "expo-av";
 
 import { View as MotiView } from "moti";
+import { invalidateToken, invalidateUser } from "@/utils/utils";
 
 const months = [
     "January",
@@ -54,6 +55,13 @@ const ProfilePage = () => {
                 }}
             >
                 PRESS ME MF!
+            </Button>
+
+            <Button onPress={() => {
+                invalidateToken();
+                invalidateUser();
+            }}>
+                Invalidate everything
             </Button>
 
             <View className="flex flex-col p-4 gap-4">
@@ -166,10 +174,6 @@ const Audio = ({ index, name, refresh }: AudioProps) => {
                     animate={{
                         width: `${progress * 100}%`,
                         opacity: isPlaying ? 1 : 0,
-                    }}
-                    transition={{
-                        type: "timing",
-                        duration: 400,
                     }}
                 />
             </View>

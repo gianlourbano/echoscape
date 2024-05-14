@@ -10,24 +10,12 @@ import {
     LeafletView,
     MapMarker,
 } from "@charlespalmerbf/react-native-leaflet-js";
-import { useMap } from "react-leaflet";
 
 import { Button, Modal, Portal } from "react-native-paper";
 
-import { invalidateToken, invalidateUser } from "@/utils/utils";
 import { createMapMarker } from "@/utils/utils/mapMarkers";
 import { getCurrentPosition } from "@/utils/location/location";
-import { GestureResponderEvent } from "react-native";
-
-import MapView, { UrlTile } from "react-native-maps";
-
-const Marker = () => {
-    return (
-        <div key="test2" className="">
-            Helloooo
-        </div>
-    );
-};
+import { useNetwork } from "@/utils/network/NetworkProvider";
 
 export default function Page() {
     const [location, setLocation] = useState<Location.LocationObject | null>(
@@ -50,27 +38,31 @@ export default function Page() {
 
     useEffect(() => {
         getCurrentPosition().then((loc) => {
-            withAuthFetch("http://130.136.2.83/audio/all")
-                .then((data) => data.json())
-                .then((data) => {
-                    console.log(data);
-                    data.forEach(
-                        (audio: {
-                            id: number;
-                            latitude: number;
-                            longitude: number;
-                        }) =>
-                            addMapMarker(
-                                audio.latitude,
-                                audio.longitude,
-                                `marker-audio:${audio.id}`
-                            )
-                    );
-                });
+            // withAuthFetch("http://130.136.2.83/audio/all")
+            //     .then((data) => data.json())
+            //     .then((data) => {
+            //         console.log(data);
+            //         data.forEach(
+            //             (audio: {
+            //                 id: number;
+            //                 latitude: number;
+            //                 longitude: number;
+            //             }) =>
+            //                 addMapMarker(
+            //                     audio.latitude,
+            //                     audio.longitude,
+            //                     `marker-audio:${audio.id}`
+            //                 )
+            //         );
+            //     });
 
             if (loc) {
                 setLocation(loc);
-                addMapMarker(loc.coords.latitude, loc.coords.longitude, "marker-own:0");
+                addMapMarker(
+                    loc.coords.latitude,
+                    loc.coords.longitude,
+                    "marker-own:0"
+                );
             }
         });
     }, []);
@@ -113,20 +105,26 @@ export default function Page() {
                             const type = message.payload.mapMarkerID
                                 .split("marker-")[1]
                                 .split(":")[0];
-                                console.log(type);
+                            console.log(type);
 
-                                switch(type) {
-                                    case "audio":
-                                        setCurrentMarker(Number(message.payload.mapMarkerID.split(":")[1]));
-                                        break;
-                                    case "own":
-                                        setCurrentMarker(0);
-                                        break;
-                                    default:
-                                        setCurrentMarker(null);
-                                }
+                            switch (type) {
+                                case "audio":
+                                    setCurrentMarker(
+                                        Number(
+                                            message.payload.mapMarkerID.split(
+                                                ":"
+                                            )[1]
+                                        )
+                                    );
+                                    break;
+                                case "own":
+                                    setCurrentMarker(0);
+                                    break;
+                                default:
+                                    setCurrentMarker(null);
+                            }
                         }
-                        21.
+                        21;
                     }}
                 />
             </View>

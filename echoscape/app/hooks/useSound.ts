@@ -3,6 +3,8 @@ import { AVPlaybackStatus, Audio } from "expo-av";
 import * as FileSystem from "expo-file-system";
 import { getUserBaseURI } from "@/utils/fs/fs";
 
+import * as Notifications from "expo-notifications";
+
 /*
 hook to play an audio
 output: function that, when called, plays the sound
@@ -14,6 +16,15 @@ usage:
 export function usePlaySound(
     onPlayBackStatusUpdate?: (status: AVPlaybackStatus) => void
 ) {
+
+    Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldPlaySound: false,
+          shouldSetBadge: false,
+        }),
+      });
+
     const [sound, setSound] = useState<Audio.Sound | null>(null);
 
     async function playSound(file: any) {
@@ -27,6 +38,13 @@ export function usePlaySound(
 
         console.log("usePlaySound: Playing Sound");
         await sound.playAsync();
+        Notifications.scheduleNotificationAsync({
+            content: {
+              title: "🎵",
+              body: "Playing sound",
+            },
+            trigger: null,
+          });
 
         //unloads sound right after playing it
         //sound.unloadAsync();

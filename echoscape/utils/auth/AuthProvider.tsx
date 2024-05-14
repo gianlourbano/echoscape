@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useReducer, useState } from "react";
 import { createStrictContext } from "@/utils/StrictContext";
-import NetInfo from "@react-native-community/netinfo";
 
 import { ss_save, ss_get, ss_delete } from "@/utils/secureStore/SStore";
 import {
@@ -23,13 +22,22 @@ const getToken = async (payload: { username: string; password: string }) => {
             "Content-Type": "application/x-www-form-urlencoded",
         },
         body: `username=${payload.username}&password=${payload.password}`,
-    });
+    }).catch((e) => {
+        console.log(e)
+        console.log("Error while fetching token");
+        return null;
+    })
+
+    if(!res) {
+        console.log("Error while fetching token");
+        return { error: "server-500" };
+    }
 
     const data = await res.json();
 
-    if(res.status !== 200) {
+    if (res.status !== 200) {
         console.log("Error while fetching token");
-        return {error: "invalid-credentials"};
+        return { error: "invalid-credentials" };
     }
 
     await ss_save("token", data.client_secret);
@@ -69,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                             password,
                         };
                     } else {
-                        break;
+                        return authDispatchAsync("logout");
                     }
                     console.log("refreshing token with", payload);
 
@@ -99,8 +107,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     }
 
                     const data = await getToken(payload);
-                    if(data.error) {
-                        setAuthStatus("error-invalid-credentials");
+                    if (data.error) {
+                        setAuthStatus(`error-${data.error}`);
                         return "LOGIN_FAILED";
                     }
 
@@ -115,8 +123,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     console.log(lastUpdate);
 
                     await FileSystem.makeDirectoryAsync(
-                        FileSystem.documentDirectory + `user-${payload.username}`, {
-                            intermediates: true
+                        FileSystem.documentDirectory +
+                            `user-${payload.username}`,
+                        {
+                            intermediates: true,
                         }
                     );
 
