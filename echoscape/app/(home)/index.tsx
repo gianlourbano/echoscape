@@ -13,9 +13,11 @@ import {
 
 import { Button, Modal, Portal } from "react-native-paper";
 
-import { createMapMarker } from "@/utils/utils/mapMarkers";
+import { createMapMarker } from "@/utils/markers/mapMarkers";
 import { getCurrentPosition } from "@/utils/location/location";
 import { useNetwork } from "@/utils/network/NetworkProvider";
+import MarkerModal from "@/components/MarkerModals/MarkerModal";
+import { getMarkerNumber, getMarkerType } from "@/utils/markers/markerId";
 
 export default function Page() {
     const [location, setLocation] = useState<Location.LocationObject | null>(
@@ -30,10 +32,11 @@ export default function Page() {
 
     const { dispatch, status, withAuthFetch } = useAuth();
 
-    const [currentMarker, setCurrentMarker] = useState<number | null>(null);
+    const [currentMarkerID, setCurrentMarkerID] = useState<string>("")
+    const [currentMarkerNumber, setCurrentMarkerNumber] = useState<number | null>(null);
 
     const hideModal = () => {
-        setCurrentMarker(null);
+        setCurrentMarkerNumber(null);
     };
 
     useEffect(() => {
@@ -69,24 +72,11 @@ export default function Page() {
 
     return (
         <>
-            <Portal>
-                <Modal
-                    visible={currentMarker !== null}
-                    onDismiss={hideModal}
-                    contentContainerStyle={{
-                        backgroundColor: "white",
-                        padding: 20,
-                        borderRadius: 10,
-                        margin: 20,
-                        alignItems: "center",
-                    }}
-                >
-                    <Text>
-                        Example Modal. Click outside this area to dismiss.
-                    </Text>
-                    <Text>Current marker: {currentMarker}</Text>
-                </Modal>
-            </Portal>
+            <MarkerModal 
+                visible={currentMarkerNumber != null}
+                currentMarker={currentMarkerID}
+                setCurrentMarker={setCurrentMarkerNumber} 
+            />
             <View style={styles.container}>
                 <LeafletView
                     mapCenterPosition={
@@ -102,26 +92,22 @@ export default function Page() {
                     onMessageReceived={(message) => {
                         if (message.event === "onMapMarkerClicked") {
                             console.log(message.payload.mapMarkerID);
-                            const type = message.payload.mapMarkerID
-                                .split("marker-")[1]
-                                .split(":")[0];
+                            const type = getMarkerType(message.payload.mapMarkerID)
                             console.log(type);
+
+                            setCurrentMarkerID(message.payload.mapMarkerID)
 
                             switch (type) {
                                 case "audio":
-                                    setCurrentMarker(
-                                        Number(
-                                            message.payload.mapMarkerID.split(
-                                                ":"
-                                            )[1]
-                                        )
+                                    setCurrentMarkerNumber(
+                                        getMarkerNumber(message.payload.mapMarkerID)
                                     );
                                     break;
                                 case "own":
-                                    setCurrentMarker(0);
+                                    setCurrentMarkerNumber(0);
                                     break;
                                 default:
-                                    setCurrentMarker(null);
+                                    setCurrentMarkerNumber(null);
                             }
                         }
                         21;

@@ -1,5 +1,6 @@
 import { LatLng } from "leaflet";
 import { MapMarker } from "@charlespalmerbf/react-native-leaflet-js";
+import { getMarkerType } from "./markerId";
 
 global.count = 0;
 
@@ -11,16 +12,31 @@ export function createMapMarker(
     lat: number,
     lng: number,
     id?: string,
-    icon?: number
+    icon?: number | string
 ): MapMarker {
     let selectedIcon = "";
+    if (!icon) {
+        icon = getMarkerType(id)
+    }
     switch (icon) {
         case 1:
-            selectedIcon = `<div className="size-32 bg-red-500"></div>`;
-            break;
+            selectedIcon = `<div className="size-32 bg-red-500"></div>`
+            break
         //more icons can be added
+        case "own":
+            selectedIcon = "👤"
+            break
+        case "audio":
+            selectedIcon = "🎵"
+            break
+        case "poi":
+            selectedIcon = "🏛️"
+            break
+        case "audio_group":
+            selectedIcon = "🎶"
+            break
         default:
-            selectedIcon = "📍";
+            selectedIcon = "📍"
     }
 
     return {
