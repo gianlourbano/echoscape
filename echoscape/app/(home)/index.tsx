@@ -40,15 +40,11 @@ export default function Page() {
     const [currentMarkerID, setCurrentMarkerID] = useState<string>("")
     const [currentMarkerNumber, setCurrentMarkerNumber] = useState<number | null>(null);
 
-    //leaflet map related utility states 
-    const [currentZoomLevel, setCurrentZoomLevel] = useState<number>(0)
-    const [currentBounds, setCurrentBounds] = useState({})
-
     //ids, lat and lng of all audios
-    const [audioAllArray, setAudioAllArray] = useState([])
+    const [audioAllArray, setAudioAllArray] = useState<{id: string, lat: number, lng: number}[]>([])
 
     //all audios - audios out of map borders - audios which data are already in cache
-    const [audiosToFetch, setAudiosToFetch] = useState<string[]>([])
+    const [audiosToFetch, setAudiosToFetch] = useState<{id: string, lat: number, lng: number}[]>([])
 
     const hideModal = () => {
         setCurrentMarkerNumber(null);
@@ -61,14 +57,20 @@ export default function Page() {
         maxLng: number,
         minLng: number
     ) {
+        console.log("composeAudiosToFetchArray eseguita lat: ", maxLat, minLat, " lng ", maxLng, minLng)
+
         if (audioAllArray.length !== 0) {
+            console.log("composeAudiosToFetchArray entra in if")
             const visibleAudios = filterAllAudios(audioAllArray, maxLat, minLat, maxLng, minLng)
+            console.log("composeAudiosToFetchArray visibleAudios: ", visibleAudios)
             const notCachedAudios = await Promise.all(
                 visibleAudios.map(item => inCache(`http://130.136.2.83/audio/${item.id}`))
             )
+            console.log("composeAudiosToFetchArray notCachedAudios: ", notCachedAudios)
             setAudiosToFetch(
                 audioAllArray.filter((item, index) => !notCachedAudios[index])
             )
+            console.log("composeAudiosToFetchArray array: ", audioAllArray.filter((item, index) => !notCachedAudios[index]))
         }
     }
 
@@ -97,11 +99,10 @@ export default function Page() {
         }
 
         else if (message.event === LeafletEvents.ON_ZOOM_END) {
-            //console.log("onZoomEnd zoom: ", message.payload.zoom)
-            //console.log("onZoomEnd bounds: ", message.payload.bounds)
-
-            setCurrentZoomLevel(message.payload.zoom)
-            setCurrentBounds(message.payload.bounds)
+            //console.log("onMoveEnd zoom: ", message.payload.zoom)
+            //console.log("onMoveEnd bounds: ")
+            //console.log("lat ", message.payload.bounds._northEast.lat, message.payload.bounds._southWest.lat)
+            //console.log("lng ", message.payload.bounds._northEast.lng, message.payload.bounds._southWest.lng)
 
             if (message.payload.zoom === 16) {
                 const maxLat = Math.max(message.payload.bounds._northEast.lat, message.payload.bounds._southWest.lat)
@@ -109,19 +110,17 @@ export default function Page() {
                 const maxLng = Math.max(message.payload.bounds._northEast.lng, message.payload.bounds._southWest.lng)
                 const minLng = Math.min(message.payload.bounds._northEast.lng, message.payload.bounds._southWest.lng)
                 
-                //console.log("l'errore 500 qua sotto è perchè non so come si prende il token dell'utente. basta modificare qua sotto")
-                //const audios = await fetchAudiosInBounds(maxLat, minLat, maxLng, minLng, "token?")
-
                 composeAudiosToFetchArray(maxLat, minLat, maxLng, minLng)
                 
             }
         }
 
         else if (message.event === LeafletEvents.ON_MOVE_END) {
+            //console.log("onMoveEnd zoom: ", message.payload.zoom)
+            //console.log("onMoveEnd bounds: ")
+            //console.log("lat ", message.payload.bounds._northEast.lat, message.payload.bounds._southWest.lat)
+            //console.log("lng ", message.payload.bounds._northEast.lng, message.payload.bounds._southWest.lng)
             
-            setCurrentZoomLevel(message.payload.zoom)
-            setCurrentBounds(message.payload.bounds)
-
             if (message.payload.zoom === 16) {
                 const maxLat = Math.max(message.payload.bounds._northEast.lat, message.payload.bounds._southWest.lat)
                 const minLat = Math.min(message.payload.bounds._northEast.lat, message.payload.bounds._southWest.lat)
@@ -131,6 +130,8 @@ export default function Page() {
                 composeAudiosToFetchArray(maxLat, minLat, maxLng, minLng)
             }
         }
+
+
     }
     
 
@@ -179,13 +180,19 @@ export default function Page() {
             in caso venissero caricati audio proprio dopo che l'utente apre l'app
         --
     */
-        useEffect(() => {
-            (async () => {
-                const response = await withAuthFetch(`http://130.136.2.83/audio/all`);
-                const data = await response.json();
-                setAudioAllArray(data);
-            })()
-        }, [])
+    useEffect(() => {
+        (async () => {
+            const response = await withAuthFetch(`http://130.136.2.83/audio/all`)
+            const data = await response.json()
+            const processedData = data.map(item => ({lat: item.latitude, lng: item.longitude, id: item.id}))
+            setAudioAllArray(processedData);
+            console.log("audioAllArray: ", processedData)
+
+            processedData.forEach((item) => {
+                addMapMarker(item.lat, item.lng, `marker-audio:${item.id}`)
+            })
+        })()
+    }, [])
 
 
 
@@ -207,24 +214,29 @@ export default function Page() {
         const intervalId = setInterval(() => {
             if (audiosToFetch.length !== 0 && index < audiosToFetch.length) {
                 withAuthFetch(
-                    `http://130.136.2.83/audio/${audiosToFetch[index]}`,
+                    `http://130.136.2.83/audio/${audiosToFetch[index].id}`,
                     undefined,
                     cachedFetch
                 )
+                
+                //console.log("useeffect richiesta canzoni, entrato in if, audiosToFetch.length: ", audiosToFetch.length)
+                //console.log("useeffect richiesta canzoni, entrato in if, audiosToFetch[0]: ", audiosToFetch[0])
+                //console.log("useeffect richiesta canzoni, entrato in if, id: ", audiosToFetch[index])
                 index++;
-
-                console.log("useeffect richiesta canzoni, entrato in if")
             } else {
-                console.log("useeffect richiesta canzoni, entrato in else")
+                console.log("useeffect richiesta canzoni, cancello intervallo (else)")
                 clearInterval(intervalId)
             }
         }, 1000)
     
         return () => {
-            console.log("useeffect richiesta canzoni, entrato in return")
+            console.log("useeffect richiesta canzoni, cancello intervallo (return)")
             clearInterval(intervalId); 
         }
-    }, [currentZoomLevel, currentBounds])
+    }, [audiosToFetch])
+
+
+
 
     return (
         <>
@@ -238,8 +250,8 @@ export default function Page() {
                     mapCenterPosition={
                         location
                             ? {
-                                  lat: location.coords.latitude,
-                                  lng: location.coords.longitude,
+                                  lat: location.coords.latitude, //44  metti queste coordinate se vuoi vedere l'unico marker esistente sul backend per ora (poi cancella questo commento)
+                                  lng: location.coords.longitude,  //43
                               }
                             : { lat: 0, lng: 0 }
                     }

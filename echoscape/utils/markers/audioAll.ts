@@ -34,16 +34,16 @@ export function filterAllAudios(
     maxLng: number,
     minLng: number
 ) {
-    const filteredArray = array.map((element) => {
-        if (maxLat >= element.lat &&
+    const filteredArray = array.filter((element) => {
+        return (
+            maxLat >= element.lat &&
             minLat <= element.lat &&
             maxLng >= element.lng &&
             minLng <= element.lng
-        ) return element
-        
-    })
+        );
+    });
 
-    return filteredArray
+    return filteredArray;
 }
 
 
