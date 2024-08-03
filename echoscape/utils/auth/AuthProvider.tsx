@@ -16,19 +16,22 @@ import * as FileSystem from "expo-file-system";
 const [AuthProvider_, useAuth] = createStrictContext<AuthContext>(undefined);
 
 const getToken = async (payload: { username: string; password: string }) => {
-    const res = await fetch(`http://130.136.2.83/auth/token`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: `username=${payload.username}&password=${payload.password}`,
-    }).catch((e) => {
-        console.log(e)
+    const res = await fetch(
+        `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/auth/token`,
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: `username=${payload.username}&password=${payload.password}`,
+        }
+    ).catch((e) => {
+        console.log(e);
         console.log("Error while fetching token");
         return null;
-    })
+    });
 
-    if(!res) {
+    if (!res) {
         console.log("Error while fetching token");
         return { error: "server-500" };
     }
