@@ -24,7 +24,7 @@ export default function App() {
     return (
         <View className="flex justify-center flex-1">
             <MaterialBottomTabs
-                initialRouteName="index"
+                initialRouteName="post/index"
                 screenOptions={{
                     header: Header,
                     // API Reference: https://reactnavigation.org/docs/material-bottom-tab-navigator#options

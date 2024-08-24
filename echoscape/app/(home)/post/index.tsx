@@ -8,7 +8,6 @@ import { Button } from "react-native-paper";
 
 import { usePlaySound, useRecordSound } from "@/app/hooks/useSound";
 import ConditionalButton from "@/components/conditionalButton";
-import { createMapMarker } from "@/utils/utils/mapMarkers";
 
 import testSound1 from "../../../assets/3515__patchen__tone-1.wav";
 import testSound2 from "../../../assets/130604__delta_omega_muon__dtmf_tone.wav";

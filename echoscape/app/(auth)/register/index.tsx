@@ -14,7 +14,7 @@ const RegisterPage = () => {
     const { dispatch } = useAuth();
 
     const handleRegister = () => {
-        fetch(`http://130.136.2.83/auth`, {
+        fetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/auth`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
