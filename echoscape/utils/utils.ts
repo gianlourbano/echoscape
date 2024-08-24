@@ -10,3 +10,57 @@ export const invalidateUser = async () => {
     await ss_delete("password");
 
 }
+
+
+/**
+ * Creates a debounced function that delays the invocation of the provided function until after 
+ * a specified wait time has elapsed since the last time the debounced function was invoked.
+ * If the debounced function is called again before the wait time has elapsed, the previous 
+ * invocation is canceled and the wait time is reset.
+ *
+ * @template T - The type of the function to debounce.
+ * @param {T} func - The function to debounce. It can be any function that takes any number of arguments.
+ * @param {number} wait - The number of milliseconds to wait before invoking the function.
+ * @returns {(...args: Parameters<T>) => Promise<ReturnType<T>>} - Returns a new debounced function that returns a promise.
+ *
+ * @example
+ * // Example usage:
+ * const debouncedFunction = debounce((message: string) => {
+ *     console.log(message);
+ * }, 1000);
+ *
+ * debouncedFunction("Hello");
+ * debouncedFunction("World");
+ * // Only "World" will be logged to the console after 1 second, because the second call resets the timer.
+ */
+export function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
+    let timeout: NodeJS.Timeout | null = null;
+
+    console.log("DEBUG debounce 1")
+
+
+    return function executedFunction(...args: Parameters<T>): Promise<ReturnType<T>> {
+        return new Promise((resolve, reject) => {
+            const later = () => {
+                timeout = null;
+                try {
+                    const result = func(...args);
+                    if (result instanceof Promise) {
+                        result.then(resolve).catch(reject);
+                    } else {
+                        resolve(result);
+                    }
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+
+            console.log("DEBUG debounce setto timeout")
+            timeout = setTimeout(later, wait);
+        });
+    };
+}

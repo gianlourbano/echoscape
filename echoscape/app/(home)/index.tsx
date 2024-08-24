@@ -22,6 +22,8 @@ import MarkerModal from "@/components/MarkerModals/MarkerModal";
 import { getMarkerNumber, getMarkerType } from "@/utils/markers/markerId";
 import { fetchAudiosInBounds, filterAllAudios } from "@/utils/markers/audioAll";
 import { cachedFetch, inCache } from "@/utils/cache/cache";
+import { debounce } from "@/utils/utils";
+import { sendOverpassRequest } from "@/utils/overpass/request";
 
 export default function Page() {
     const [location, setLocation] = useState<Location.LocationObject | null>(
@@ -38,23 +40,30 @@ export default function Page() {
 
     //used to display correct pop up when user presses on a marker on the map
     const [currentMarkerID, setCurrentMarkerID] = useState<string>("");
-    const [currentMarkerNumber, setCurrentMarkerNumber] = useState<
-        number | null
-    >(null);
+    const [currentMarkerNumber, setCurrentMarkerNumber] = useState<number | null>(null);
 
     //ids, lat and lng of all audios
-    const [audioAllArray, setAudioAllArray] = useState<
-        { id: string; lat: number; lng: number }[]
-    >([]);
+    const [audioAllArray, setAudioAllArray] = useState<{ id: string; lat: number; lng: number }[]>([]);
 
     //all audios - audios out of map borders - audios which data are already in cache
-    const [audiosToFetch, setAudiosToFetch] = useState<
-        { id: string; lat: number; lng: number }[]
-    >([]);
+    const [audiosToFetch, setAudiosToFetch] = useState<{ id: string; lat: number; lng: number }[]>([]);
+
+    const [POIlist, setPOIlist] = useState<{ lat: number, lng: number, name: number, id: string}[]>([])
 
     const hideModal = () => {
         setCurrentMarkerNumber(null);
     };
+
+    const debounceFetchPOIs = debounce(async (bbox: { minLat: number; minLon: number; maxLat: number; maxLon: number; }, timeout?: number) => {
+        console.log("DEBUG POI 1 bbox: ", bbox)
+        const result = await sendOverpassRequest(bbox, timeout)
+        const newPOIs = result.map(item => createMapMarker(item.lat, item.lon, item.id, "poi"))
+        setMarkers(prevItems => {
+            const uniqueItems = new Set([...prevItems, ...newPOIs]);
+            return Array.from(uniqueItems);
+        });
+        console.log("DEBUG NEW POIs: ", newPOIs)
+    }, 1000)
 
     async function composeAudiosToFetchArray(
         maxLat: number,
@@ -150,6 +159,7 @@ export default function Page() {
                 );
 
                 composeAudiosToFetchArray(maxLat, minLat, maxLng, minLng);
+                debounceFetchPOIs({minLat: minLat, minLon: minLng, maxLat: maxLat, maxLon: maxLng})
             }
         } else if (message.event === LeafletEvents.ON_MOVE_END) {
             //console.log("onMoveEnd zoom: ", message.payload.zoom)

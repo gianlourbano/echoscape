@@ -20,6 +20,8 @@ import { useAuth } from "@/utils/auth/AuthProvider";
 
 import { Image } from "expo-image";
 
+import { sendOverpassRequest } from "@/utils/overpass/request";
+
 export default function Page() {
     const playSound = usePlaySound();
     const { startRecording, stopRecording } = useRecordSound();
@@ -31,7 +33,17 @@ export default function Page() {
     >();
 
     async function testFunction() {
-        playSound(testSound2);
+        const bbox = {
+            minLat: 44.026917110746,
+            minLon: 11.048809105664,
+            maxLat: 44.934468750236,
+            maxLon: 11.939893442898
+        };
+        const timeout = 90; // Puoi cambiare questo valore se necessario
+        const maxsize = 1073741824; // Puoi cambiare questo valore se necessario
+    
+        const result = await sendOverpassRequest(bbox, timeout);
+        //console.log("DEBUG OVERPASS: ", result);
     }
 
     async function startRecordButton() {
