@@ -117,12 +117,12 @@ export function useRecordSound() {
         const uri = recording.getURI();
         console.log("useRecordSound: Recording stopped and stored at", uri);
 
-        const dir = await getUserBaseURI();
+        // const dir = await getUserBaseURI();
 
-        await FileSystem.copyAsync({
-            from: uri,
-            to: dir + `/recording-${Date.now()}.wav`,
-        });
+        // await FileSystem.copyAsync({
+        //     from: uri,
+        //     to: dir + `/recording-${Date.now()}.wav`,
+        // });
 
         return uri;
     }

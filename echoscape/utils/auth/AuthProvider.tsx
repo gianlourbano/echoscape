@@ -133,6 +133,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         }
                     );
 
+                    await FileSystem.makeDirectoryAsync(
+                        FileSystem.documentDirectory + "tmp/" + 
+                            `user-${payload.username}`,
+                        {
+                            intermediates: true,
+                        }
+                    );
+
                     setAuthStatus("authenticated");
                     router.navigate("/");
                     return "LOGIN_SUCCESFUL";

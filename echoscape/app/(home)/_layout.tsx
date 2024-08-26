@@ -26,7 +26,7 @@ export default function App() {
             <MaterialBottomTabs
                 initialRouteName="post/index"
                 screenOptions={{
-                    header: Header,
+                    // header: Header,
                     // API Reference: https://reactnavigation.org/docs/material-bottom-tab-navigator#options
                 }}
                 tabBar={({ navigation, state, descriptors, insets }) => {

@@ -7,6 +7,11 @@ export const getUserBaseURI = async () => {
   return FileSystem.documentDirectory + `user-${username}`;
 }
 
+export const getUserTmpUri = async () => {
+  const username = await ss_get("username");
+  return FileSystem.documentDirectory + "tmp/" + `user-${username}`;
+}
+
 export const getUserCacheURI = async () => {
   const username = await ss_get("username");
   if(!username) return FileSystem.cacheDirectory + `global-cache`;

@@ -6,11 +6,12 @@
     - [ ] audios recorded in filesystem
   - [ ] show errors properly
 - [ ] record audio
-  - [ ] check if network is available, otherwise schedule it for later
-  - [ ] check the audio and replay it before uploading
-  - [ ] discard audio
+  - [x] check if network is available, otherwise save it for later
+  - [ ] background task to upload audio when network is available
+  - [x] check the audio and replay it before uploading
+  - [x] discard audio
   - [ ] upload audio
-  - [ ] store audio locally
+  - [x] store audio locally
   - [ ] if not wifi, ask user to confirm upload
   - [ ] notification when network (wifi?) becomes available
   - [ ] save backend info locally
@@ -19,7 +20,8 @@
   - [ ] visualize saved audio and relative data (even offline)
   - [ ] delete audio from backend with api
 - [ ] map
-  - [ ] fetch markers -> show them on map -> cluster based on zoom level
+  - [x] fetch markers -> show them on map
+  - [ ] cluster markers based on zoom level
   - [ ] click on marker -> fetch audio data and cache it
   - [ ] [OPTIONAL] fetch based on zoom level -> filter based on some criteria (e.g. only show dance music)
 
