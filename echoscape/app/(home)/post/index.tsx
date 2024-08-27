@@ -158,6 +158,7 @@ export default function Page() {
         </View>
     );
 }
+}
 
 const styles = StyleSheet.create({
     container: {
