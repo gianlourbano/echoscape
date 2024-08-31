@@ -1,13 +1,11 @@
 import { Slot } from "expo-router";
 
 import "../global.css";
-import { PaperProvider } from "react-native-paper";
+import { PaperProvider, MD3DarkTheme } from "react-native-paper";
 import { AuthProvider } from "@/utils/auth/AuthProvider";
-import {
-    SQLiteProvider,
-    type SQLiteDatabase,
-} from "expo-sqlite";
+import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
+
 
 export default function RootLayout() {
     return (
@@ -36,16 +34,6 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
   PRAGMA journal_mode = 'wal';
   CREATE TABLE audios (id INTEGER PRIMARY KEY NOT NULL, user TEXT NOT NULL, uri TEXT NOT NULL, uploaded BOOLEAN NOT NULL DEFAULT 0, backendData TEXT);
   `);
-        // await db.runAsync(
-        //     "INSERT INTO todos (value, intValue) VALUES (?, ?)",
-        //     "hello",
-        //     1
-        // );
-        // await db.runAsync(
-        //     "INSERT INTO todos (value, intValue) VALUES (?, ?)",
-        //     "world",
-        //     2
-        // );
         currentDbVersion = 1;
     }
     // if (currentDbVersion === 1) {
