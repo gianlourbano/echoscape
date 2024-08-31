@@ -25,15 +25,13 @@ const Header = (props: BottomTabHeaderProps) => {
 };
 
 export default function App() {
-    
-
     return (
         <View className="flex justify-center flex-1">
             <MaterialBottomTabs
                 initialRouteName="post/index"
                 screenOptions={
                     {
-                         //header: Header,
+                        //header: Header,
                         // API Reference: https://reactnavigation.org/docs/material-bottom-tab-navigator#options
                     }
                 }
@@ -110,6 +108,26 @@ export default function App() {
                     }}
                 />
                 <MaterialBottomTabs.Screen
+                    name="map2/index"
+                    options={{
+                        tabBarLabel: "Map",
+
+                        tabBarIcon(props) {
+                            return (
+                                <Icon
+                                    color={props.color}
+                                    size={24}
+                                    source={
+                                        props.focused
+                                            ? "map-marker-radius"
+                                            : "map-marker-radius-outline"
+                                    }
+                                />
+                            );
+                        },
+                    }}
+                />
+                <MaterialBottomTabs.Screen
                     name="post/index"
                     options={{
                         tabBarLabel: "Post",
@@ -165,8 +183,7 @@ export default function App() {
                                     // if i click on the icon 5 times, open the debug menu
 
                                     source={
-                                        props.focused
-                                            ? "bug" : "bug-outline"
+                                        props.focused ? "bug" : "bug-outline"
                                     }
                                 />
                             );

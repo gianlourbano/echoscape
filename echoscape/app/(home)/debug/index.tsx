@@ -4,6 +4,7 @@ import { createStrictContext } from "@/utils/StrictContext";
 import { useNetInfo, refresh } from "@react-native-community/netinfo";
 import { ScrollView } from "moti";
 import { useCallback, useEffect, useState } from "react";
+import MapView, { UrlTile } from "react-native-maps";
 import { Surface, Button, Text, Card } from "react-native-paper";
 
 type DebugContext = {
@@ -54,6 +55,7 @@ export default function DebugPage() {
                         <NetworkDebug />
                         <LocationDebug />
                         <SoundDebug />
+                        <MapDebug />
                     </Surface>
                 </ScrollView>
             </Surface>
@@ -64,10 +66,11 @@ export default function DebugPage() {
 const DebugContainer = ({ children, title }) => {
     return (
         <Card className="flex flex-col gap-2 p-4 rounded-md">
-            <Card.Title title={title} className="text-lg font-bold "></Card.Title>
-            <Card.Content>
-                {children}
-            </Card.Content>
+            <Card.Title
+                title={title}
+                className="text-lg font-bold "
+            ></Card.Title>
+            <Card.Content>{children}</Card.Content>
         </Card>
     );
 };
@@ -181,6 +184,16 @@ const SoundDebug = () => {
     return (
         <DebugContainer title="Sound">
             <Text>Not implemented</Text>
+        </DebugContainer>
+    );
+};
+
+const MapDebug = () => {
+    return (
+        <DebugContainer title="Map">
+            <MapView style={{ height: 200 }}>
+                <UrlTile urlTemplate="http://c.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            </MapView>
         </DebugContainer>
     );
 };
