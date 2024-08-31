@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 import { Image } from "react-native";
 import { Link } from "expo-router";
@@ -26,9 +26,8 @@ import { debounce } from "@/utils/utils";
 import { sendOverpassRequest } from "@/utils/overpass/request";
 
 export default function Page() {
-    const [location, setLocation] = useState<Location.LocationObject | null>(
-        null
-    );
+
+    const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
 
     const [markers, setMarkers] = useState<MapMarker[]>([]);
 
@@ -48,6 +47,7 @@ export default function Page() {
     //all audios - audios out of map borders - audios which data are already in cache
     const [audiosToFetch, setAudiosToFetch] = useState<{ id: string; lat: number; lng: number }[]>([]);
 
+    //non utilizzato, per ora
     const [POIlist, setPOIlist] = useState<{ lat: number, lng: number, name: number, id: string}[]>([])
 
     const hideModal = () => {
@@ -71,17 +71,9 @@ export default function Page() {
         maxLng: number,
         minLng: number
     ) {
-        console.log(
-            "composeAudiosToFetchArray eseguita lat: ",
-            maxLat,
-            minLat,
-            " lng ",
-            maxLng,
-            minLng
-        );
+        console.log("composeAudiosToFetchArray eseguita lat: ", maxLat, minLat, " lng ", maxLng, minLng );
 
         if (audioAllArray.length !== 0) {
-            console.log("composeAudiosToFetchArray entra in if");
             const visibleAudios = filterAllAudios(
                 audioAllArray,
                 maxLat,
@@ -89,36 +81,21 @@ export default function Page() {
                 maxLng,
                 minLng
             );
-            console.log(
-                "composeAudiosToFetchArray visibleAudios: ",
-                visibleAudios
-            );
+            console.log("composeAudiosToFetchArray visibleAudios: ",visibleAudios);
             const notCachedAudios = await Promise.all(
-                visibleAudios.map((item) =>
-                    inCache(
-                        `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${item.id}`
-                    )
-                )
+                visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${item.id}`))
             );
-            console.log(
-                "composeAudiosToFetchArray notCachedAudios: ",
-                notCachedAudios
-            );
-            setAudiosToFetch(
-                audioAllArray.filter((item, index) => !notCachedAudios[index])
-            );
-            console.log(
-                "composeAudiosToFetchArray array: ",
-                audioAllArray.filter((item, index) => !notCachedAudios[index])
-            );
+            //LOG//console.log("composeAudiosToFetchArray notCachedAudios: ", notCachedAudios);
+            setAudiosToFetch(audioAllArray.filter((item, index) => !notCachedAudios[index]));
+            //LOG//console.log("composeAudiosToFetchArray array: ",audioAllArray.filter((item, index) => !notCachedAudios[index]));
         }
     }
 
     async function handleMapEvents(message: WebviewLeafletMessage) {
         if (message.event === LeafletEvents.ON_MAP_MARKER_CLICKED) {
-            console.log(message.payload.mapMarkerID);
+            console.log("[handleMapEvents]: message.payload.mapMarkerID: ", message.payload.mapMarkerID);
             const type = getMarkerType(message.payload.mapMarkerID);
-            console.log(type);
+            console.log("[handleMapEvents]: marker type: ", type);
 
             setCurrentMarkerID(message.payload.mapMarkerID);
 
@@ -162,6 +139,7 @@ export default function Page() {
                 debounceFetchPOIs({minLat: minLat, minLon: minLng, maxLat: maxLat, maxLon: maxLng})
             }
         } else if (message.event === LeafletEvents.ON_MOVE_END) {
+            
             //console.log("onMoveEnd zoom: ", message.payload.zoom)
             //console.log("onMoveEnd bounds: ")
             //console.log("lat ", message.payload.bounds._northEast.lat, message.payload.bounds._southWest.lat)
@@ -187,10 +165,17 @@ export default function Page() {
 
                 composeAudiosToFetchArray(maxLat, minLat, maxLng, minLng);
             }
+        } else if (message.event === LeafletEvents.ON_VIEW_RESET) {
+            console.warn("ON_VIEW_RESET received")
+        } else if (message.event === LeafletEvents.ON_ZOOM_LEVELS_CHANGE) {
+            console.warn("ON_ZOOM_LEVELS_CHANGE received")
+        } else if (message.event === LeafletEvents.ON_RESIZE) {
+            console.warn("ON_ZOOM_LEVELS_CHANGE received")
         }
     }
 
     useEffect(() => {
+        console.warn("centro mappa sulla posizione dell'utente. questa cosa dovrebbe avvenire solo quando apro la pagina della mappa")
         getCurrentPosition().then((loc) => {
             // withAuthFetch("${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all")
             //     .then((data) => data.json())
@@ -211,7 +196,7 @@ export default function Page() {
             //     });
 
             if (loc) {
-                setLocation(loc);
+                setUserLocation(loc);
                 addMapMarker(
                     loc.coords.latitude,
                     loc.coords.longitude,
@@ -302,16 +287,18 @@ export default function Page() {
             <View style={styles.container}>
                 <LeafletView
                     mapCenterPosition={
-                        location
+                        userLocation
                             ? {
-                                  lat: location.coords.latitude, //44  metti queste coordinate se vuoi vedere l'unico marker esistente sul backend per ora (poi cancella questo commento)
-                                  lng: location.coords.longitude, //43
+                                  lat: userLocation.coords.latitude, //44  metti queste coordinate se vuoi vedere l'unico marker esistente sul backend per ora (poi cancella questo commento)
+                                  lng: userLocation.coords.longitude, //43
                               }
                             : { lat: 0, lng: 0 }
                     }
                     mapMarkers={[...markers]}
                     doDebug={false}
                     onMessageReceived={handleMapEvents}
+
+                    maxZoom={100}
                 />
             </View>
         </>

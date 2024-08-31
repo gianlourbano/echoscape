@@ -1,24 +1,40 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export const cachedFetch: typeof fetch = async (
     url: RequestInfo | URL,
     options: RequestInit = {}
 ): Promise<Response> => {
-    const cacheKey = url;
-    const cache = await caches.open("cache");
-    const cachedResponse = await cache.match(cacheKey);
+    const cacheKey = typeof url === 'string' ? url : url.toString();
 
-    if (cachedResponse) {
-        return cachedResponse;
+    try {
+        const cachedResponseText = await AsyncStorage.getItem(cacheKey);
+
+        if (cachedResponseText) {
+            return new Response(cachedResponseText);
+        }
+
+        const response = await fetch(url, options);
+        const responseText = await response.text();
+        await AsyncStorage.setItem(cacheKey, responseText);
+        return new Response(responseText, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers
+        });
+    } catch (error) {
+        console.error('Failed to fetch and cache resource:', error);
+        return fetch(url, options);
     }
-
-    const response = await fetch(url, options);
-    cache.put(cacheKey, response.clone());
-    return response;
 };
 
-
-
 export async function inCache(url: RequestInfo | URL): Promise<boolean> {
-    const cache = await caches.open("cache");
-    const cachedResponse = await cache.match(url);
-    return cachedResponse !== undefined;
+    const cacheKey = typeof url === 'string' ? url : url.toString();
+
+    try {
+        const cachedResponse = await AsyncStorage.getItem(cacheKey);
+        return cachedResponse !== null;
+    } catch (error) {
+        console.error('Failed to check cache:', error);
+        return false;
+    }
 }
