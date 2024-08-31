@@ -10,8 +10,12 @@ import { SafeAreaView, Text } from "moti";
 import { useNetwork } from "@/utils/network/NetworkProvider";
 
 import { Image } from "expo-image";
+import { MotiPressable } from "moti/interactions";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
 
 const Header = (props: BottomTabHeaderProps) => {
+    const router = useRouter();
     const { status: NetStatus } = useNetwork();
     return (
         <SafeAreaView className="h-28 p-2 flex items-center">
@@ -21,14 +25,18 @@ const Header = (props: BottomTabHeaderProps) => {
 };
 
 export default function App() {
+    
+
     return (
         <View className="flex justify-center flex-1">
             <MaterialBottomTabs
                 initialRouteName="post/index"
-                screenOptions={{
-                    // header: Header,
-                    // API Reference: https://reactnavigation.org/docs/material-bottom-tab-navigator#options
-                }}
+                screenOptions={
+                    {
+                         //header: Header,
+                        // API Reference: https://reactnavigation.org/docs/material-bottom-tab-navigator#options
+                    }
+                }
                 tabBar={({ navigation, state, descriptors, insets }) => {
                     return (
                         <BottomNavigation.Bar
@@ -125,15 +133,40 @@ export default function App() {
                     name="profile/index"
                     options={{
                         tabBarLabel: "Profile",
+
                         tabBarIcon(props) {
                             return (
                                 <Icon
                                     color={props.color}
                                     size={24}
+                                    // if i click on the icon 5 times, open the debug menu
+
                                     source={
                                         props.focused
                                             ? "account-circle"
                                             : "account-circle-outline"
+                                    }
+                                />
+                            );
+                        },
+                    }}
+                />
+
+                <MaterialBottomTabs.Screen
+                    name="debug/index"
+                    options={{
+                        tabBarLabel: "Debug",
+
+                        tabBarIcon(props) {
+                            return (
+                                <Icon
+                                    color={props.color}
+                                    size={24}
+                                    // if i click on the icon 5 times, open the debug menu
+
+                                    source={
+                                        props.focused
+                                            ? "bug" : "bug-outline"
                                     }
                                 />
                             );

@@ -66,22 +66,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             switch (action) {
                 case "refresh": {
                     setAuthStatus("loading");
-                    console.log("trying to refresh token...");
-                    if (authStatus === "authenticated") {
-                        const username = await ss_get("username");
-                        const password = await ss_get("password");
+                    const username = await ss_get("username");
+                    const password = await ss_get("password");
 
-                        if (!username || !password) {
-                            return authDispatchAsync("logout");
-                        }
-
-                        payload = {
-                            username,
-                            password,
-                        };
-                    } else {
+                    if (!username || !password) {
                         return authDispatchAsync("logout");
                     }
+
+                    const payload = {
+                        username,
+                        password,
+                    };
+
+                    //setAuthStatus("loading");
+                    
                     console.log("refreshing token with", payload);
 
                     const data = await getToken(payload);
