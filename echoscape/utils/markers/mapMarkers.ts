@@ -1,4 +1,3 @@
-import { LatLng } from "leaflet";
 import { getMarkerType } from "./markerId";
 
 global.count = 0;
