@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     );
 
                     setAuthStatus("authenticated");
-                    router.navigate("/");
+                    router.navigate("index");
                     return "LOGIN_SUCCESFUL";
                 }
             }

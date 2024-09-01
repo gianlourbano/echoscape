@@ -3,7 +3,7 @@ import NetInfo from "@react-native-community/netinfo";
 
 export const getNetworkStatus = async (): Promise<NetTypes.NetStatus> => {
     const state = await NetInfo.fetch();
-    console.log("Network status: " + JSON.stringify(state, null, 2));
+    //console.log("Network status: " + JSON.stringify(state, null, 2));
     return state.isConnected ? "net-ok" : "net-offline";
 };
 

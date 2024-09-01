@@ -191,9 +191,7 @@ const SoundDebug = () => {
 const MapDebug = () => {
     return (
         <DebugContainer title="Map">
-            <MapView style={{ height: 200 }}>
-                <UrlTile urlTemplate="http://c.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-            </MapView>
+            <Text>Not implemented</Text>
         </DebugContainer>
     );
 };

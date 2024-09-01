@@ -41,3 +41,4 @@
     - [ ] shareable information cards regarding your music tastes
   - [ ] all users data: songs uploaded from all other users in an area
 - [ ] heatmap with song information data 
+- [ ] check current velocity like pokemon go and show a message if the user is moving too fast, warning about safety
