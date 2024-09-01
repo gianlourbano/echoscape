@@ -20,9 +20,11 @@ export type AuthStatus =
 export type UserData = {
     username: string;
     id: string;
+    url?: string;
 };
 
 export type AuthContext = {
+    user: UserData | undefined;
     status: AuthStatus;
     dispatch: (
         action: Action,

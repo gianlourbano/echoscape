@@ -8,7 +8,7 @@ import { View as MotiView, AnimatePresence } from "moti";
 import * as FileSystem from "expo-file-system";
 import { getUserBaseURI, getUserTmpUri } from "@/utils/fs/fs";
 
-import { usePlaySound, useRecordSound } from "@/app/hooks/useSound";
+import { usePlaySound, useRecordSound } from "@/hooks/useSound";
 
 import { Audio, AudioProps } from "@/components/Audio/Audio";
 import { useSQLiteContext } from "expo-sqlite";

@@ -139,8 +139,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         }
                     );
 
+                    setUser({
+                        id: data.client_id,
+                        username: payload.username,
+                    })
+
                     setAuthStatus("authenticated");
-                    router.navigate("index");
+                    router.navigate("/");
                     return "LOGIN_SUCCESFUL";
                 }
             }
@@ -203,10 +208,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const token = await ss_get("token");
-            if (token) {
-                setAuthStatus("authenticated");
-            }
+            const user = await ss_get("username");
+            const pass = await ss_get("password");
+            await authDispatchAsync("login", { username: user, password: pass });
         };
 
         checkAuth();
@@ -215,6 +219,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return (
         <AuthProvider_
             value={{
+                user: user,
                 status: authStatus,
                 dispatch: authDispatchAsync,
                 withAuthFetch,

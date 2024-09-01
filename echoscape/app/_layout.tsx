@@ -1,4 +1,4 @@
-import { Slot } from "expo-router";
+import { Slot, Stack } from "expo-router";
 
 import "../global.css";
 import { PaperProvider, MD3DarkTheme } from "react-native-paper";

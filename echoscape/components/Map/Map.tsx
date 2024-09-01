@@ -159,6 +159,22 @@ const MapComponent = () => {
         }
     };
 
+    // pokemon go style circle
+    // const [radius, setRadius] = useState(0);
+
+    // useEffect(() => {
+    //     // expand the circle every 5 seconds from 0 to 100 meters
+    //     let radius = 0;
+    //     const interval = setInterval(() => {
+    //         radius += 2;
+    //         if (radius > 100) {
+    //             radius = 0;
+    //         }
+    //         setRadius(radius);
+    //     }, 25);
+    //     return () => clearInterval(interval);
+    // }, [location])
+
     return (
         <MapView
             style={styles.map}

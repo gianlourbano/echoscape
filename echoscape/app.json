@@ -11,6 +11,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#e6e6e6"
     },
+    "experiments": {
+      "typedRoutes": true
+    },
     "scheme": "https",
     "assetBundlePatterns": [
       "**/*"

@@ -3,7 +3,7 @@ import { View as MotiView } from "moti";
 import { Text, View } from "react-native";
 import { IconButton } from "react-native-paper";
 import { useState, useEffect, useCallback } from "react";
-import { usePlaySound } from "@/app/hooks/useSound";
+import { usePlaySound } from "@/hooks/useSound";
 import * as FileSystem from "expo-file-system";
 import { useAudioDB } from "@/utils/sql/sql";
 

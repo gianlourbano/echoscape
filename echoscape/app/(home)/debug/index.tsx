@@ -89,6 +89,7 @@ const AuthDebug = () => {
             >
                 Test fetch
             </Button>
+            <Button onPress={() => dispatch('logout')}>Logout</Button>
         </DebugContainer>
     );
 };
