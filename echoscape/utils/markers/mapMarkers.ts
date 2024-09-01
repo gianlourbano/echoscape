@@ -1,8 +1,14 @@
 import { LatLng } from "leaflet";
-import { MapMarker } from "@charlespalmerbf/react-native-leaflet-js";
 import { getMarkerType } from "./markerId";
 
 global.count = 0;
+
+export interface MapMarkerInfo {
+    position: { lat: number, lng: number },
+    icon: any,
+    size: [32, 32],
+    id: string,
+}
 
 /*
 serve più che altro a non dover copiare e incollare tutte le volte le emoji
@@ -13,7 +19,7 @@ export function createMapMarker(
     lng: number,
     id?: string,
     icon?: number | string
-): MapMarker {
+): MapMarkerInfo {
     let selectedIcon = "";
     if (!icon) {
         icon = getMarkerType(id)
