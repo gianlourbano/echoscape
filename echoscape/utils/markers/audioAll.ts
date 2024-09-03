@@ -1,9 +1,10 @@
 import { Region } from "react-native-maps";
 import { inCache } from "../cache/cache";
+import { MapMarkerInfo } from "./mapMarkers";
 
 export async function audioAllRequest(
     token: string
-): Promise<backendAudioAllData[]> {
+): Promise<MapMarkerInfo[]> {
     const response = await fetch(
         "${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all",
         {
@@ -21,7 +22,7 @@ export async function audioAllRequest(
 
     const data = await response.json();
 
-    return data as backendAudioAllData[];
+    return data as MapMarkerInfo[];
 }
 
 /*
@@ -39,26 +40,34 @@ takes in input an array of positions and a box
 returns an array containing only elements inside the box
 */
 function filterAllAudios(
-    array: backendAudioAllData[],
+    array: MapMarkerInfo[],
     maxLat: number,
     minLat: number,
     maxLng: number,
     minLng: number
 ) {
     const filteredArray = array.filter((element) => {
+        if (0) console.log("DEBUG ", element, (
+            maxLat >= element.position.lat &&
+            minLat <= element.position.lat &&
+            maxLng >= element.position.lng &&
+            minLng <= element.position.lng
+        ), "element.position.lat, lng: ", element.position.lat, element.position.lng, "maxLat minLat maxLng minLng", maxLat, minLat, maxLng, minLng)
         return (
-            maxLat >= element.lat &&
-            minLat <= element.lat &&
-            maxLng >= element.lng &&
-            minLng <= element.lng
+            maxLat >= element.position.lat &&
+            minLat <= element.position.lat &&
+            maxLng >= element.position.lng &&
+            minLng <= element.position.lng
         );
     });
+
+    //console.log("DEBUG FILTEREDAARRAY: ", filteredArray)
 
     return filteredArray;
 }
 
 /*
-returns all audios inside the box - no backed information, only position and id
+returns all audios inside the box - no backend information, only position and id
 */
 export async function fetchAudiosInBounds(
     maxLat: number,
@@ -82,7 +91,7 @@ returns an array containing only elements inside the box that are NOT in cache
 */
 export async function composeAudiosToFetchArray(
     region: Region,
-    allAudiosArray: backendAudioAllData[]
+    allAudiosArray: MapMarkerInfo[]
 ) {
 
     const maxLat = region.latitude + region.latitudeDelta
@@ -101,12 +110,12 @@ export async function composeAudiosToFetchArray(
             maxLng,
             minLng
         );
-        //LOG//console.log("composeAudiosToFetchArray visibleAudios: ",visibleAudios);
-        const notCachedAudios = await Promise.all(
-            visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${item.id}`))
+        console.log("[composeAudiosToFetchArray] visibleAudios (length ", visibleAudios.length, "): ",visibleAudios);
+        const cachedAudios = await Promise.all(
+            visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${item.markerId}`))
         );
-        //LOG//console.log("composeAudiosToFetchArray notCachedAudios: ", notCachedAudios);
-        return(allAudiosArray.filter((item, index) => !notCachedAudios[index]));
-        //LOG//console.log("composeAudiosToFetchArray array: ",audioAllArray.filter((item, index) => !notCachedAudios[index]));
+        console.log("[composeAudiosToFetchArray] cachedAudios (length: ", cachedAudios.length, "): ", cachedAudios);
+        console.log("[composeAudiosToFetchArray] returns array: ",visibleAudios.filter((item, index) => !cachedAudios[index]));
+        return(visibleAudios.filter((item, index) => !cachedAudios[index]));
     }
 }

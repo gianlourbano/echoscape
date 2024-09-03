@@ -7,7 +7,7 @@ import { useAuth } from "@/utils/auth/AuthProvider";
 import { getZoomLevel } from "@/utils/map/mapUtils";
 import { composeAudiosToFetchArray } from "@/utils/markers/audioAll";
 import { cachedFetch } from "@/utils/cache/cache";
-import { createMapMarker, MapMarkerInfo } from "@/utils/markers/mapMarkers";
+import { createMapMarker, getAudioId, MapMarkerInfo } from "@/utils/markers/mapMarkers";
 
 /*
 piazza medaglie d'oro
@@ -32,10 +32,10 @@ const MapComponent = () => {
     const [markers, setMarkers] = useState<MapMarkerInfo[]>([]);
 
     //ids, lat and lng of all audios
-    const [audioAllArray, setAudioAllArray] = useState<{ id: string; lat: number; lng: number }[]>([]);
+    const [audioAllArray, setAudioAllArray] = useState<MapMarkerInfo[]>([]);
 
     //all audios - audios out of map borders - audios which data are already in cache
-    const [audiosToFetch, setAudiosToFetch] = useState<{ id: string; lat: number; lng: number }[]>([]);
+    const [audiosToFetch, setAudiosToFetch] = useState<MapMarkerInfo[]>([]);
 
     const { withAuthFetch } = useAuth();
     
@@ -46,16 +46,18 @@ const MapComponent = () => {
 
 
     async function handleRegionChange(region: Region, details: Details): Promise<void> {
-        const DEBUG = true
-        if (DEBUG) {
-            console.log(`map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture}`)
-            console.debug(`zoomLevel: ${getZoomLevel(region)}`)        
-        }
-        setRegion(region)
-
-        const zoomLevel = getZoomLevel(region)
-        if (zoomLevel >= 16) {
-            setAudiosToFetch(await composeAudiosToFetchArray(region, audioAllArray))
+        if (details.isGesture) {
+            const DEBUG = true
+            if (DEBUG) {
+                console.log(`map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture}`)
+                console.debug(`zoomLevel: ${getZoomLevel(region)}`)        
+            }
+            setRegion(region)
+            
+            const zoomLevel = getZoomLevel(region)
+            if (zoomLevel >= 16) {
+                setAudiosToFetch(await composeAudiosToFetchArray(region, audioAllArray))
+            }
         }
     }
 
@@ -79,19 +81,24 @@ const MapComponent = () => {
                 `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all`
             );
             const data = await response.json();
-            const processedData = data.map((item) => ({
-                position: {
-                    lat: item.latitude,
-                    lng: item.longitude,
-                },
-                id: `marker-audio:${item.id}`
-            }));
+            const processedData = data.map((item) => {
+                let id = ""
+                if (item.id) {
+                    id = item.id ? (item.id[0] == 'm' ? item.id : `marker-audio:${item.id}`) : `marker-audio:undefined`;
+                }
+                return {
+                    position: {
+                        lat: item.latitude ?? 0,
+                        lng: item.longitude ?? 0,
+                    },
+                    markerId: id
+                };
+            });
 
             //setMarkers(processedData);
 
             setAudioAllArray(processedData);
-            console.log("AAAA audioaallaayy: ", processedData)
-            processedData.forEach((item) => {addMapMarker(item.position.lat, item.position.lng, `marker-audio:${item.id}`);});
+            processedData.forEach((item) => {addMapMarker(item.position.lat, item.position.lng, `marker-audio:${item.markerId}`);});
         })();
 
     }, []);
@@ -110,32 +117,27 @@ const MapComponent = () => {
                 - the user moves to a zone with no audios to fetch (the array length is 0)
         */
         let index = 0;
-        console.log("useeffect richiesta canzoni, index: ", index);
         const intervalId = setInterval(() => {
+            console.log("useeffect richiesta canzoni, index: ", index, " array length: ", audiosToFetch.length);
             if (audiosToFetch.length !== 0 && index < audiosToFetch.length) {
+                console.log(`DEBUG////////// sending request: ${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(audiosToFetch[index].markerId)}`)
                 withAuthFetch(
-                    `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audiosToFetch[index].id}`,
+                    `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(audiosToFetch[index].markerId)}`,
                     undefined,
                     cachedFetch
                 );
 
-                //console.log("useeffect richiesta canzoni, entrato in if, audiosToFetch.length: ", audiosToFetch.length)
-                //console.log("useeffect richiesta canzoni, entrato in if, audiosToFetch[0]: ", audiosToFetch[0])
-                //console.log("useeffect richiesta canzoni, entrato in if, id: ", audiosToFetch[index])
+
                 index++;
             } else {
-                console.log(
-                    "useeffect richiesta canzoni, cancello intervallo (else)"
-                );
+                console.log("useeffect richiesta canzoni, cancello intervallo (else)");
                 clearInterval(intervalId);
             }
         }, 1000);
         
 
         return () => {
-            console.log(
-                "useeffect richiesta canzoni, cancello intervallo (return)"
-            );
+            console.log("useeffect richiesta canzoni, cancello intervallo (return)");
             clearInterval(intervalId);
         };
     }, [audiosToFetch]);
@@ -188,7 +190,7 @@ const MapComponent = () => {
 
             {markers.map((marker) =>
             (<Marker
-                    key={marker.id}
+                    key={marker.markerId}
                     coordinate={{latitude: marker.position.lat, longitude: marker.position.lng}}
                     icon={marker.icon}
                 />

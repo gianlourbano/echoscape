@@ -7,6 +7,7 @@ export const cachedFetch: typeof fetch = async (
     const cacheKey = typeof url === 'string' ? url : url.toString();
 
     try {
+        console.log("DEBUG CACHEKEY: ", cacheKey)
         const cachedResponseText = await AsyncStorage.getItem(cacheKey);
 
         if (cachedResponseText) {
@@ -29,9 +30,11 @@ export const cachedFetch: typeof fetch = async (
 
 export async function inCache(url: RequestInfo | URL): Promise<boolean> {
     const cacheKey = typeof url === 'string' ? url : url.toString();
+    console.log("ENTRA QUA????")
 
     try {
         const cachedResponse = await AsyncStorage.getItem(cacheKey);
+        console.log("DEBUG cachedResponse: ", url, cachedResponse)
         return cachedResponse !== null;
     } catch (error) {
         console.error('Failed to check cache:', error);

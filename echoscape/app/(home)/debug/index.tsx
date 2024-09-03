@@ -1,9 +1,11 @@
 import { useAuth } from "@/utils/auth/AuthProvider";
 import { ss_get, ss_save } from "@/utils/secureStore/SStore";
 import { createStrictContext } from "@/utils/StrictContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNetInfo, refresh } from "@react-native-community/netinfo";
 import { ScrollView } from "moti";
 import { useCallback, useEffect, useState } from "react";
+import { TouchableOpacity, View, StyleSheet } from "react-native";
 import MapView, { UrlTile } from "react-native-maps";
 import { Surface, Button, Text, Card } from "react-native-paper";
 
@@ -56,6 +58,7 @@ export default function DebugPage() {
                         <LocationDebug />
                         <SoundDebug />
                         <MapDebug />
+                        <PlaceholderDebug />
                     </Surface>
                 </ScrollView>
             </Surface>
@@ -190,9 +193,93 @@ const SoundDebug = () => {
 };
 
 const MapDebug = () => {
+    const [allKeys, setAllKeys] = useState<readonly string[]>([]);
+    const [cacheData, setCacheData] = useState<{ [key: string]: any }>({});
+    const [expandedKeys, setExpandedKeys] = useState<Set<string>>(new Set());
+
+    async function eraseAudioCache() {
+        allKeys.forEach((item, index) => {
+            AsyncStorage.removeItem(item)
+        })
+    }
+
+    useEffect(() => {
+        AsyncStorage.getAllKeys((error: Error | null, result: readonly string[]) => {
+            if (result) {
+                setAllKeys(result);
+            }
+        });
+    }, []);
+
+    const toggleExpand = (key: string) => {
+        setExpandedKeys((prev) => {
+            const newSet = new Set(prev);
+            if (newSet.has(key)) {
+                newSet.delete(key);
+            } else {
+                newSet.add(key);
+            }
+            return newSet;
+        });
+    };
+
+    useEffect(() => {
+        allKeys.forEach((key) => {
+            AsyncStorage.getItem(key, (error, result) => {
+                if (result) {
+                    setCacheData((prevData) => ({
+                        ...prevData,
+                        [key]: result,
+                    }));
+                }
+                if (error) {
+                    console.error("Error while fetching cache in MapDebug: ", error)
+                }
+            });
+        });
+    }, [allKeys]);
+
     return (
         <DebugContainer title="Map">
-            <Text>Not implemented</Text>
+            <Button onPress={eraseAudioCache}>Clear audio marker cache</Button>
+            {allKeys.map((key) => (
+                <View key={key} style={styles.dropdownContainer}>
+                    <TouchableOpacity onPress={() => toggleExpand(key)}>
+                        <Text style={styles.dropdownTitle}>{key}</Text>
+                    </TouchableOpacity>
+                    {expandedKeys.has(key) && (
+                        <View style={styles.dropdownContent}>
+                            <Text>{cacheData[key]}</Text>
+                        </View>
+                    )}
+                </View>
+            ))}
         </DebugContainer>
     );
 };
+
+const styles = StyleSheet.create({
+    dropdownContainer: {
+        marginBottom: 10,
+    },
+    dropdownTitle: {
+        fontWeight: 'bold',
+        fontSize: 16,
+        padding: 10,
+        backgroundColor: '#000000',
+        borderRadius: 5,
+    },
+    dropdownContent: {
+        padding: 10,
+        backgroundColor: '#0f0f0f',
+        borderRadius: 5,
+    },
+});
+
+const PlaceholderDebug = () => {
+    return (
+        <DebugContainer title="Fondo pagina">
+            <Text>riempitivo</Text>
+        </DebugContainer>
+    )
+}
