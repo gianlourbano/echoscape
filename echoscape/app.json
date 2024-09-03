@@ -14,7 +14,7 @@
     "experiments": {
       "typedRoutes": true
     },
-    "scheme": "https",
+    "scheme": "echoscape",
     "assetBundlePatterns": [
       "**/*"
     ],

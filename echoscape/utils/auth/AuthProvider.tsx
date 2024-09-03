@@ -79,7 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     };
 
                     //setAuthStatus("loading");
-                    
+
                     console.log("refreshing token with", payload);
 
                     const data = await getToken(payload);
@@ -132,7 +132,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     );
 
                     await FileSystem.makeDirectoryAsync(
-                        FileSystem.documentDirectory + "tmp/" + 
+                        FileSystem.documentDirectory +
+                            "tmp/" +
                             `user-${payload.username}`,
                         {
                             intermediates: true,
@@ -142,7 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     setUser({
                         id: data.client_id,
                         username: payload.username,
-                    })
+                    });
 
                     setAuthStatus("authenticated");
                     router.navigate("/");
@@ -186,22 +187,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     ...options?.headers,
                     Authorization: `Bearer ${token}`,
                 },
-            }).then(async (res) => {
-                console.log("AuthFetch status: " + res.status);
+            })
+                .then(async (res) => {
+                    console.log("AuthFetch status: " + res.status);
 
-                if (res.status === 401) {
-                    console.log("Token expired, rescheduling");
-                    const statusCode = await authDispatchAsync("refresh");
-                    if (statusCode === "REFRESH_SUCCESFUL")
-                        return withAuthFetch(url, options);
-                    else {
-                        setAuthStatus("error-refresh-failed");
-                        return res;
+                    if (res.status === 401) {
+                        console.log("Token expired, rescheduling");
+                        const statusCode = await authDispatchAsync("refresh");
+                        if (statusCode === "REFRESH_SUCCESFUL")
+                            return withAuthFetch(url, options);
+                        else {
+                            setAuthStatus("error-refresh-failed");
+                            return res;
+                        }
                     }
-                }
 
-                return res;
-            });
+                    return res;
+                })
+                .catch((e) => {
+                    const error = {
+                        error: e,
+                    };
+                    return new Response(JSON.stringify(error));
+                });
         },
         []
     );
@@ -210,7 +218,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const checkAuth = async () => {
             const user = await ss_get("username");
             const pass = await ss_get("password");
-            await authDispatchAsync("login", { username: user, password: pass });
+            await authDispatchAsync("login", {
+                username: user,
+                password: pass,
+            });
         };
 
         checkAuth();
