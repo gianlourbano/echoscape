@@ -110,12 +110,12 @@ export async function composeAudiosToFetchArray(
             maxLng,
             minLng
         );
-        console.log("[composeAudiosToFetchArray] visibleAudios (length ", visibleAudios.length, "): ",visibleAudios);
+        console.debug("number of visible audios: ", visibleAudios.length);
         const cachedAudios = await Promise.all(
             visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(item.markerId)}`))
         );
-        console.log("[composeAudiosToFetchArray] cachedAudios (length: ", cachedAudios.length, "): ", cachedAudios);
-        console.log("[composeAudiosToFetchArray] returns array: ",visibleAudios.filter((item, index) => !cachedAudios[index]));
+        //console.log("[composeAudiosToFetchArray] cachedAudios (length: ", cachedAudios.length, "): ", cachedAudios);
+        console.debug("[composeAudiosToFetchArray] returns array: ",visibleAudios.filter((item, index) => !cachedAudios[index]));
         return(visibleAudios.filter((item, index) => !cachedAudios[index]));
     }
 }

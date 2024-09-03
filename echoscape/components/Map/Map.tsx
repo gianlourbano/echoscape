@@ -51,7 +51,13 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
     const { withAuthFetch } = useAuth();
 
     const addMapMarker = useCallback((lat: number, lng: number, id: string) => {
-        setMarkers((prev) => [...prev, createMapMarker(lat, lng, id)]);
+        setMarkers((prev) => {
+            const markerExists = prev.some(marker => marker.markerId === id);
+            if (markerExists) {
+                return prev;
+            }
+            return [...prev, createMapMarker(lat, lng, id)];
+        });
     }, []);
 
 
@@ -126,9 +132,8 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
         */
         let index = 0;
         const intervalId = setInterval(() => {
-            console.log("useeffect richiesta canzoni, index: ", index, " array length: ", audiosToFetch.length);
             if (audiosToFetch.length !== 0 && index < audiosToFetch.length) {
-                console.log(`DEBUG////////// sending request: ${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(audiosToFetch[index].markerId)}`)
+                console.log(`prefetching ${audiosToFetch[index].markerId}, song n.${index} of the ${audiosToFetch.length} waiting in queue`);
                 withAuthFetch(
                     `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(audiosToFetch[index].markerId)}`,
                     undefined,
@@ -138,13 +143,13 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
 
                 index++;
             } else {
-                console.log("useeffect richiesta canzoni, cancello intervallo (else)");
+                console.debug("useeffect richiesta canzoni, cancello intervallo (else)");
                 clearInterval(intervalId);
             }
         }, 1000);
 
         return () => {
-            console.log("useeffect richiesta canzoni, cancello intervallo (return)");
+            console.debug("useeffect richiesta canzoni, cancello intervallo (return)");
             clearInterval(intervalId);
         };
     }, [audiosToFetch]);

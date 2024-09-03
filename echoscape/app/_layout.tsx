@@ -7,6 +7,12 @@ import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
 
 
+// assign this value to false if you want to disable all console.debug
+if (true) {
+    console.debug = () => {};
+}
+
+
 export default function RootLayout() {
     return (
         <SQLiteProvider databaseName="audios.db" onInit={migrateDbIfNeeded}>
