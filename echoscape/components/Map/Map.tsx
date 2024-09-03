@@ -62,7 +62,7 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
 
 
     async function handleRegionChange(region: Region, details: Details): Promise<void> {
-        if (details.isGesture) {
+        if (true) {
             const DEBUG = true
             if (DEBUG) {
                 console.log(`map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture}`)

@@ -5,6 +5,7 @@ import { PaperProvider, MD3DarkTheme } from "react-native-paper";
 import { AuthProvider } from "@/utils/auth/AuthProvider";
 import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
+import { SWRConfig } from "swr";
 
 
 // assign this value to false if you want to disable all console.debug
@@ -15,6 +16,8 @@ if (true) {
 
 export default function RootLayout() {
     return (
+        <SWRConfig>
+
         <SQLiteProvider databaseName="audios.db" onInit={migrateDbIfNeeded}>
             <NetworkProvider>
                 <AuthProvider>
@@ -24,6 +27,7 @@ export default function RootLayout() {
                 </AuthProvider>
             </NetworkProvider>
         </SQLiteProvider>
+        </SWRConfig>
     );
 }
 
