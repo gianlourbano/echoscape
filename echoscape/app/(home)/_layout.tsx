@@ -27,7 +27,7 @@ export default function App() {
             }}
         >
             <Stack.Screen name="(tabs)" options={{headerShown: false}} />
-            <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+            <Stack.Screen name="song/[songid]" options={{ presentation: "modal" }} />
             <Stack.Screen name="debug/index" options={{presentation: "modal"}} />
         </Stack>
     );

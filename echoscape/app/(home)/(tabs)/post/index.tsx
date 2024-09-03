@@ -15,6 +15,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { useAudioDB, AudioData } from "@/utils/sql/sql";
 
 import { sendOverpassRequest } from "@/utils/overpass/request";
+import PageContainer from "@/components/PageContainer";
 
 export default function Page() {
     const [recordings, setRecordings] = useState<string[]>([]);
@@ -104,7 +105,7 @@ export default function Page() {
     }, []);
 
     return (
-        <View style={styles.container}>
+        <PageContainer className="flex flex-1 flex-col">
             <View className="h-[30%]">
                 <Button onPress={() => startRecording()}>Record</Button>
                 <Button onPress={() => stopRecordingAndSaveTmp()}>Stop</Button>
@@ -145,7 +146,7 @@ export default function Page() {
                     </AnimatePresence>
                 </View>
             </ScrollView>
-        </View>
+        </PageContainer>
     );
 
 }

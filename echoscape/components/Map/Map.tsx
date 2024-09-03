@@ -17,13 +17,23 @@ incrocio a caso in via san mamolo
 44.485377, 11.339487
 */
 
-const MapComponent = () => {
+const MapComponent = ({ initialLatitude, initialLongitude }) => {
     const [region, setRegion] = useState({
         latitude: 44.485377,
         longitude: 11.339487,
         latitudeDelta: 0.0922,
         longitudeDelta: 0.0421,
     });
+
+    useEffect(() => {
+        if (initialLatitude && initialLongitude)
+            setRegion({
+                latitude: initialLatitude,
+                longitude: initialLongitude,
+                latitudeDelta: 0.0922,
+                longitudeDelta: 0.0421,
+            });
+    }, [initialLatitude, initialLongitude]);
 
     const [routeCoordinates, setRouteCoordinates] = useState([]);
 
@@ -38,7 +48,6 @@ const MapComponent = () => {
     const [audiosToFetch, setAudiosToFetch] = useState<MapMarkerInfo[]>([]);
 
     const { withAuthFetch } = useAuth();
-    
 
     const addMapMarker = useCallback((lat: number, lng: number, id: string) => {
         setMarkers((prev) => [...prev, createMapMarker(lat, lng, id)]);
@@ -60,7 +69,6 @@ const MapComponent = () => {
             }
         }
     }
-
 
     useEffect(() => {
         getCurrentPosition().then((loc) => {
@@ -100,7 +108,6 @@ const MapComponent = () => {
             setAudioAllArray(processedData);
             processedData.forEach((item) => {addMapMarker(item.position.lat, item.position.lng, `marker-audio:${item.markerId}`);});
         })();
-
     }, []);
 
     /*
@@ -134,7 +141,6 @@ const MapComponent = () => {
                 clearInterval(intervalId);
             }
         }, 1000);
-        
 
         return () => {
             console.log("useeffect richiesta canzoni, cancello intervallo (return)");
@@ -148,7 +154,7 @@ const MapComponent = () => {
                 `${process.env.EXPO_PUBLIC_OSRM_API_URL}/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
             );
             const data = await response.json();
-            console.log(JSON.stringify(data, null, 2))
+            console.log(JSON.stringify(data, null, 2));
             const routeCoords = data.routes[0].geometry.coordinates.map(
                 (point) => ({
                     latitude: point[1],
@@ -182,11 +188,15 @@ const MapComponent = () => {
             style={styles.map}
             region={region}
             onRegionChangeComplete={handleRegionChange}
-            
         >
-            {userLocation ? <Marker
-                coordinate={{latitude: userLocation?.coords.latitude ?? 0, longitude: userLocation?.coords.longitude ?? 0}}
-            /> : null}
+            {userLocation ? (
+                <Marker
+                    coordinate={{
+                        latitude: userLocation?.coords.latitude ?? 0,
+                        longitude: userLocation?.coords.longitude ?? 0,
+                    }}
+                />
+            ) : null}
 
             {markers.map((marker) =>
             (<Marker

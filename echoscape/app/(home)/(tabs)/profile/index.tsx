@@ -1,14 +1,40 @@
 import { useAuth } from "@/utils/auth/AuthProvider";
+import useSwr from "swr";
 import { getUserBaseURI } from "@/utils/fs/fs";
 import { useEffect, useState } from "react";
-import { RefreshControl, RefreshControlComponent, ScrollView, View } from "react-native";
+import {
+    RefreshControl,
+    RefreshControlComponent,
+    ScrollView,
+    View,
+} from "react-native";
 import * as FileSystem from "expo-file-system";
-import { Button, Surface, Text, Avatar } from "react-native-paper";
+import { Button, Surface, Text, Avatar, IconButton, Icon } from "react-native-paper";
 import { Image, SafeAreaView } from "moti";
 import { Audio } from "@/components/Audio/Audio";
 import { Link, router } from "expo-router";
 import { UserData } from "@/utils/auth/types";
 import * as ImagePicker from "expo-image-picker";
+import { useFetch } from "@/hooks/useFetch";
+
+const funnyTextsLmao = [
+    {
+        title: "So empty!",
+        subtitle: "Upload some audios!",
+    },
+    {
+        title: "Wow!",
+        subtitle: "Such empty!",
+    },
+    {
+        title: "No audios here!",
+        subtitle: "Upload some!",
+    },
+    {
+        title: "Is that music?!",
+        subtitle: "Upload it!",
+    },
+];
 
 const UserAvatar = ({ user }: { user: UserData }) => {
     const [image, setImage] = useState<string | null>(null);
@@ -32,10 +58,32 @@ const UserAvatar = ({ user }: { user: UserData }) => {
 
     return (
         <Avatar.Image
-            source={{ uri: user.url }}
+            source={{ uri: image }}
             size={80}
             onTouchStart={() => pickImage()}
         />
+    );
+};
+
+const UploadedAudio = ({ audio }: { audio: any }) => {
+    return (
+        <View
+            key={audio.id}
+            className="p-4 bg-zinc-800 flex flex-row items-center rounded-md"
+        >
+            <View className="flex-1">
+                <Link href={`/song/${audio.id}`}>
+                    <Text variant="bodyLarge">Audio #{audio.id}</Text>
+                </Link>
+            </View>
+            <View className="flex flex-row items-center justify-center">
+                <Link href={`/?latitude=${audio.latitude}&longitude=${audio.longitude}`} asChild>
+                    <IconButton icon="map-marker-radius"/>
+                </Link>
+                <IconButton icon={audio.hidden ? "closed-eye" : "eye"} onPress={() => {}} />
+                <IconButton icon="delete" onPress={() => {}} />
+            </View>
+        </View>
     );
 };
 
@@ -56,6 +104,7 @@ const ProfilePage = () => {
     }
 
     const { user, dispatch } = useAuth();
+    const { data, isLoading, error } = useFetch(`/audio/my`);
 
     useEffect(() => {
         loadRecordings();
@@ -65,23 +114,52 @@ const ProfilePage = () => {
         <SafeAreaView className="w-full bg-zinc-700 h-full">
             <View className="p-4 bg-zinc-700 flex flex-row items-center gap-4">
                 <UserAvatar user={user} />
+                <Link href="/debug" asChild>
                 <Text
                     variant="headlineMedium"
                     className="flex-1"
-                    onPress={() => router.navigate("/debug")}
-                >
+                    >
                     {user?.username}
                 </Text>
+                    </Link>
                 <Button onPress={() => dispatch("logout")}>Logout</Button>
             </View>
-            <View className="border-solid border-2 border-zinc-800 my-4 mx-8"/>
+            <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
+            <View className="p-4 flex justify-center gap-4">
+                <Text variant="titleLarge">Uploaded Audios</Text>
+                {isLoading ? (
+                    <Text>Loading...</Text>
+                ) : (
+                    data.map((audio) => {
+                        return <UploadedAudio key={audio.id} audio={audio} />;
+                    })
+                )}
+            </View>
             <ScrollView>
-                <RefreshControl refreshing={refreshing} onRefresh={async () => {loadRecordings()}}  />
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={async () => {
+                        loadRecordings();
+                    }}
+                />
 
                 {recordings.length === 0 ? (
                     <View className="flex flex-col items-center">
-                        <Text variant="titleLarge">So empty!</Text>
-                        <Text variant="titleLarge"> Upload some audios!</Text>
+                        {(() => {
+                            const randomIndex = Math.floor(
+                                Math.random() * funnyTextsLmao.length
+                            );
+                            return (
+                                <>
+                                    <Text variant="titleLarge">
+                                        {funnyTextsLmao[randomIndex].title}
+                                    </Text>
+                                    <Text variant="titleLarge">
+                                        {funnyTextsLmao[randomIndex].subtitle}
+                                    </Text>
+                                </>
+                            );
+                        })()}
                     </View>
                 ) : (
                     <>
