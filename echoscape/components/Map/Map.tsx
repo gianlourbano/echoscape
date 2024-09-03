@@ -8,6 +8,7 @@ import { getZoomLevel } from "@/utils/map/mapUtils";
 import { composeAudiosToFetchArray } from "@/utils/markers/audioAll";
 import { cachedFetch } from "@/utils/cache/cache";
 import { createMapMarker, getAudioId, MapMarkerInfo } from "@/utils/markers/mapMarkers";
+import { useFetch } from "@/hooks/useFetch";
 
 /*
 piazza medaglie d'oro
@@ -64,7 +65,7 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
             setRegion(region)
             
             const zoomLevel = getZoomLevel(region)
-            if (zoomLevel >= 16) {
+            if (zoomLevel >= 14) {
                 setAudiosToFetch(await composeAudiosToFetchArray(region, audioAllArray))
             }
         }

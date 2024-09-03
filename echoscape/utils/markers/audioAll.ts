@@ -1,6 +1,6 @@
 import { Region } from "react-native-maps";
 import { inCache } from "../cache/cache";
-import { MapMarkerInfo } from "./mapMarkers";
+import { getAudioId, MapMarkerInfo } from "./mapMarkers";
 
 export async function audioAllRequest(
     token: string
@@ -112,7 +112,7 @@ export async function composeAudiosToFetchArray(
         );
         console.log("[composeAudiosToFetchArray] visibleAudios (length ", visibleAudios.length, "): ",visibleAudios);
         const cachedAudios = await Promise.all(
-            visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${item.markerId}`))
+            visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(item.markerId)}`))
         );
         console.log("[composeAudiosToFetchArray] cachedAudios (length: ", cachedAudios.length, "): ", cachedAudios);
         console.log("[composeAudiosToFetchArray] returns array: ",visibleAudios.filter((item, index) => !cachedAudios[index]));
