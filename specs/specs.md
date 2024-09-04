@@ -1,29 +1,32 @@
 # Project specs
 
-- [ ] authentication
-  - [ ] check all cases
-    - [ ] login
-    - [ ] audios recorded in filesystem
-  - [ ] show errors properly
+- [x] authentication
+  - [x] check all cases
+    - [x] login
+    - [x] audios recorded in filesystem
+  - [x] show errors properly
 - [ ] record audio
   - [x] check if network is available, otherwise save it for later
-  - [ ] background task to upload audio when network is available
   - [x] check the audio and replay it before uploading
   - [x] discard audio
+  - [ ] background task to upload audio when network is available
   - [ ] upload audio
-  - [x] store audio locally
-  - [ ] if not wifi, ask user to confirm upload
+  - [ ] if not wifi, ask user to confirm upload 
   - [ ] notification when network (wifi?) becomes available
   - [ ] save backend info locally
+  - [x] store audio locally
 - [ ] managment of auploaded audio
   - [ ] hide/show audio for other users
-  - [ ] visualize saved audio and relative data (even offline)
   - [ ] delete audio from backend with api
+  - [x] visualize saved audio and relative data (even offline)
 - [ ] map
   - [x] fetch markers -> show them on map
   - [ ] cluster markers based on zoom level
-  - [ ] click on marker -> fetch audio data and cache it
-  - [ ] [OPTIONAL] fetch based on zoom level -> filter based on some criteria (e.g. only show dance music)
+  - [x] click on marker -> fetch audio data and cache it
+  - [x] [OPTIONAL] fetch based on zoom level
+  - [ ] [OPTIONAL] filter based on some criteria (e.g. only show dance music)
+- [ ] audio player
+- [ ] splash screen
 
 ## [EXTENSIONS] Project Extensions
 
