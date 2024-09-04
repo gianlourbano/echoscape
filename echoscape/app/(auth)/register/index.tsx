@@ -2,18 +2,34 @@ import { Link } from "expo-router";
 import { useState } from "react";
 import { View, TextInput } from "react-native";
 import { Button, Text } from "react-native-paper";
-
-import * as FileSystem from "expo-file-system";
-import { getUserBaseURI } from "@/utils/fs/fs";
 import { useAuth } from "@/utils/auth/AuthProvider";
 
 const RegisterPage = () => {
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
+    const [confirmPassword, setConfirmPassword] = useState<string>("");
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+
+    const [error, setError] = useState<string>("");
 
     const { dispatch } = useAuth();
 
     const handleRegister = () => {
+        if(!username) {
+            setError("Username is required!");
+            return;
+        }
+
+        if(!password) {
+            setError("Password is required!");
+            return;
+        }
+
+        if(password !== confirmPassword) {
+            setError("Passwords do not match!");
+            return;
+        }
+
         fetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/auth`, {
             method: "POST",
             headers: {
@@ -32,26 +48,34 @@ const RegisterPage = () => {
     };
 
     return (
-        <View className="p-6 flex flex-col gap-2 bg-gray-800 text-white h-full">
+        <View className="p-6 flex flex-col gap-2 bg-zinc-800 text-white h-full">
             <Text className=" text-xl self-center">Register Page</Text>
 
             <View className="flex flex-col gap-2 m-4 text-white">
-                <Text>Username</Text>
+                {/* <Text>Username</Text> */}
                 <TextInput
                     className="rounded-md p-4 bg-gray-500 mb-4 w-full text-white placeholder:color-gray-400"
                     inlineImageLeft="search_icon"
                     placeholder="Username"
                     onChangeText={setUsername}
                 />
-                <Text>Password</Text>
+                {/* <Text>Password</Text> */}
                 <TextInput
                     className="rounded-md p-4 bg-gray-500 mb-4 w-full placeholder:color-gray-400 text-white"
-                    inlineImageLeft="search_icon"
                     placeholder="Password"
+                    secureTextEntry={!showPassword}
                     onChangeText={setPassword}
+                />
+                {/* <Text>Confirm password</Text> */}
+                <TextInput
+                    className="rounded-md p-4 bg-gray-500 mb-4 w-full placeholder:color-gray-400 text-white"
+                    placeholder="Confirm Password"
+                    secureTextEntry={!showPassword}
+                    onChangeText={setConfirmPassword}
                 />
             </View>
             <Button onPress={handleRegister}>Register</Button>
+            {error && <Text className="text-red-500">{error}</Text>}
             <View className="flex flex-row gap-2 items-center">
                 <Text>Already have an account?</Text>
                 <Link href="/login" className="text-white" asChild>

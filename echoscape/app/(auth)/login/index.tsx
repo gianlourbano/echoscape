@@ -27,6 +27,7 @@ const LoginPage = () => {
                     className="rounded-md p-4 bg-gray-500 mb-4 w-full placeholder:color-gray-400 text-white"
                     inlineImageLeft="search_icon"
                     placeholder="Password"
+                    secureTextEntry={true}
                     onChangeText={setPassword}
                 />
             </View>

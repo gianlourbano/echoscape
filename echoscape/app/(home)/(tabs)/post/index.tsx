@@ -65,7 +65,7 @@ export default function Page() {
         if (netInfo.isConnected && netInfo.isInternetReachable) {
             console.log("[AUDIO UP] Audio can be uploaded!");
 
-            // fetch...
+            // fetch... 
 
             await addAudioData(uri).then(async () => {
                 const r = await getAudioData();
@@ -152,6 +152,7 @@ export default function Page() {
 }
 
 const styles = StyleSheet.create({
+    
     container: {
         flex: 1,
         padding: 24,

@@ -24,6 +24,7 @@ export default function App() {
             screenOptions={{
                 headerTitle: "Echoscape",
                 //headerTransparent: true,
+                headerShown: false
             }}
         >
             <Stack.Screen name="(tabs)" options={{headerShown: false}} />
