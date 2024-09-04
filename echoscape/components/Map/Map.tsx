@@ -95,29 +95,53 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
         });
     }, []);
 
+    const debounceFetchPOIs = debounce(
+        async (
+            bbox: {
+                minLat: number;
+                minLng: number;
+                maxLat: number;
+                maxLng: number;
+            },
+            timeout?: number
+        ) => {
+            const result = await sendOverpassRequest(
+                {
+                    minLat: bbox.minLat,
+                    maxLat: bbox.maxLat,
+                    minLon: bbox.minLng,
+                    maxLon: bbox.maxLng,
+                },
+                timeout
+            );
+            const newPOIs = result.map((item) =>
+                createMapMarker(
+                    item.lat,
+                    item.lon,
+                    `marker-poi:${item.id}`,
+                    "poi"
+                )
+            );
+            setMarkers((prevItems) => {
+                const markerMap = new Map();
 
-    const debounceFetchPOIs = debounce(async (bbox: { minLat: number; minLng: number; maxLat: number; maxLng: number; }, timeout?: number) => {
-        const result = await sendOverpassRequest({minLat: bbox.minLat, maxLat: bbox.maxLat, minLon: bbox.minLng, maxLon: bbox.maxLng}, timeout)
-        const newPOIs = result.map(item => createMapMarker(item.lat, item.lon, `marker-poi:${item.id}`, "poi"))
-        setMarkers(prevItems => {
-            const markerMap = new Map();
-    
-            prevItems.forEach(marker => {
-                const id = marker.markerId; // Estrai l'id dalla chiave
-                markerMap.set(id, marker);
-            });
-    
-            newPOIs.forEach(marker => {
-                const id = marker.markerId; // Estrai l'id dalla chiave
-                markerMap.set(id, marker);
-            });
-    
-            return Array.from(markerMap.values());
-        });
-        //console.log("DEBUG NEW POIs: ", newPOIs)
-        //console.log("DEBUG markers: ", markers)
-    }, 3000)
+                prevItems.forEach((marker) => {
+                    const id = marker.markerId; // Estrai l'id dalla chiave
+                    markerMap.set(id, marker);
+                });
 
+                newPOIs.forEach((marker) => {
+                    const id = marker.markerId; // Estrai l'id dalla chiave
+                    markerMap.set(id, marker);
+                });
+
+                return Array.from(markerMap.values());
+            });
+            //console.log("DEBUG NEW POIs: ", newPOIs)
+            //console.log("DEBUG markers: ", markers)
+        },
+        3000
+    );
 
     async function handleRegionChange(
         region: Region,
@@ -140,7 +164,7 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                 );
             }
             if (zoomLevel >= 16) {
-                debounceFetchPOIs(regionToLatLng(region))
+                debounceFetchPOIs(regionToLatLng(region));
             }
 
             const bbox = [
@@ -345,32 +369,37 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
             {clusters.map((cluster, index) => {
                 return (
                     <Marker
-                        key={cluster.properties.cluster_id}
+                        key={
+                            cluster.properties.cluster_id ??
+                            cluster.properties.name
+                        }
                         coordinate={{
                             latitude: cluster.center.lat,
                             longitude: cluster.center.lng,
                         }}
                     >
-                        <Callout>
-                            <View>
-                                {cluster.properties.cluster ? (
-                                    clusterer
+                        {cluster.properties.cluster ? (
+                            <Callout>
+                                {clusterer
                                     .getLeaves(
                                         cluster.properties.cluster_id,
                                         Infinity
                                     )
                                     .map((leaf) => (
-                                        <Text
-                                            key={leaf.properties.name}
-                                        >
+                                        <Text key={leaf.properties.name}>
                                             {leaf.properties.name}
                                         </Text>
-                                    ))
-                                ) : (
-                                    <Text>{cluster.properties.name}</Text>
-                                )}
-                            </View>
-                        </Callout>
+                                    ))}
+                            </Callout>
+                        ) : (
+                            <Link
+                                href={`/song/${getAudioId(
+                                    cluster.properties.name
+                                )}`}
+                            >
+                                <IconButton icon="music" size={50}></IconButton>
+                            </Link>
+                        )}
                     </Marker>
                 );
             })}
