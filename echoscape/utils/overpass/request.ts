@@ -38,9 +38,10 @@ export async function sendOverpassRequest(
         (data)=>data.json()
     )
 
-    console.info("risposta di overpass: ", result.elements)
+    //console.info("risposta di overpass: ", result.elements)
 
     //console.log("DEBUG OVERPASS: ", result)
 
     return result.elements
 }
+

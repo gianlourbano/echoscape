@@ -4,11 +4,13 @@ import MapView, { Details, Marker, Polyline, Region } from "react-native-maps";
 import { LocationObject } from "expo-location";
 import { getCurrentPosition } from "@/utils/location/location";
 import { useAuth } from "@/utils/auth/AuthProvider";
-import { getZoomLevel } from "@/utils/map/mapUtils";
+import { getZoomLevel, regionToLatLng } from "@/utils/map/mapUtils";
 import { composeAudiosToFetchArray } from "@/utils/markers/audioAll";
 import { cachedFetch } from "@/utils/cache/cache";
 import { createMapMarker, getAudioId, MapMarkerInfo } from "@/utils/markers/mapMarkers";
 import { useFetch } from "@/hooks/useFetch";
+import { debounce } from "@/utils/utils";
+import { sendOverpassRequest } from "@/utils/overpass/request";
 
 /*
 piazza medaglie d'oro
@@ -61,18 +63,43 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
     }, []);
 
 
+    const debounceFetchPOIs = debounce(async (bbox: { minLat: number; minLng: number; maxLat: number; maxLng: number; }, timeout?: number) => {
+        const result = await sendOverpassRequest({minLat: bbox.minLat, maxLat: bbox.maxLat, minLon: bbox.minLng, maxLon: bbox.maxLng}, timeout)
+        const newPOIs = result.map(item => createMapMarker(item.lat, item.lon, `marker-poi:${item.id}`, "poi"))
+        setMarkers(prevItems => {
+            const markerMap = new Map();
+    
+            prevItems.forEach(marker => {
+                const id = marker.markerId; // Estrai l'id dalla chiave
+                markerMap.set(id, marker);
+            });
+    
+            newPOIs.forEach(marker => {
+                const id = marker.markerId; // Estrai l'id dalla chiave
+                markerMap.set(id, marker);
+            });
+    
+            return Array.from(markerMap.values());
+        });
+        //console.log("DEBUG NEW POIs: ", newPOIs)
+        //console.log("DEBUG markers: ", markers)
+    }, 3000)
+
+
     async function handleRegionChange(region: Region, details: Details): Promise<void> {
-        if (true) {
+        if (details.isGesture !== false) {
             const DEBUG = true
             if (DEBUG) {
-                console.log(`map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture}`)
-                console.debug(`zoomLevel: ${getZoomLevel(region)}`)        
+                console.debug(`map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture}\tzoomLevel: ${getZoomLevel(region)}`)
             }
             setRegion(region)
             
             const zoomLevel = getZoomLevel(region)
             if (zoomLevel >= 14) {
                 setAudiosToFetch(await composeAudiosToFetchArray(region, audioAllArray))
+            }
+            if (zoomLevel >= 16) {
+                debounceFetchPOIs(regionToLatLng(region))
             }
         }
     }

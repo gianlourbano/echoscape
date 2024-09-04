@@ -1,6 +1,7 @@
 import { Region } from "react-native-maps";
 import { inCache } from "../cache/cache";
 import { getAudioId, MapMarkerInfo } from "./mapMarkers";
+import { regionToLatLng } from "../map/mapUtils";
 
 export async function audioAllRequest(
     token: string
@@ -94,10 +95,11 @@ export async function composeAudiosToFetchArray(
     allAudiosArray: MapMarkerInfo[]
 ) {
 
-    const maxLat = region.latitude + region.latitudeDelta
-    const minLat = region.latitude - region.latitudeDelta
-    const maxLng = region.longitude + region.longitudeDelta
-    const minLng = region.longitude - region.longitudeDelta
+    const coordinates = regionToLatLng(region)
+    const maxLat = coordinates.maxLat
+    const minLat = coordinates.minLat
+    const maxLng = coordinates.maxLng
+    const minLng = coordinates.minLng
 
     //LOG//console.log("composeAudiosToFetchArray eseguita lat: ", maxLat, minLat, " lng ", maxLng, minLng );
 

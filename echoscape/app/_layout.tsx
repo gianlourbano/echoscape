@@ -9,7 +9,7 @@ import { SWRConfig } from "swr";
 
 
 // assign this value to false if you want to disable all console.debug
-if (true) {
+if (false) {
     console.debug = () => {};
 }
 

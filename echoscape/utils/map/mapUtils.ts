@@ -32,3 +32,26 @@ export function getZoomLevel(regionOrLatitudeDelta: Region | number, longitudeDe
         throw new Error('Invalid arguments: this function accepts either a Region structure or two numbers');
     }
 }
+
+
+export function regionToLatLng(region: Region):
+    {
+        maxLat: number,
+        minLat: number,
+        maxLng: number,
+        minLng: number
+    } 
+    {
+        
+    const maxLat = region.latitude + region.latitudeDelta
+    const minLat = region.latitude - region.latitudeDelta
+    const maxLng = region.longitude + region.longitudeDelta
+    const minLng = region.longitude - region.longitudeDelta
+
+    return ({
+        maxLat: maxLat,
+        minLat: minLat,
+        maxLng: maxLng,
+        minLng: minLng
+    })
+}

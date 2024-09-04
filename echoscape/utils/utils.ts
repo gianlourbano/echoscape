@@ -36,7 +36,7 @@ export const invalidateUser = async () => {
 export function debounce<T extends (...args: any[]) => any>(func: T, wait: number) {
     let timeout: NodeJS.Timeout | null = null;
 
-    console.log("DEBUG debounce 1")
+    //console.log("DEBUG debounce 1")
 
 
     return function executedFunction(...args: Parameters<T>): Promise<ReturnType<T>> {
@@ -59,7 +59,6 @@ export function debounce<T extends (...args: any[]) => any>(func: T, wait: numbe
                 clearTimeout(timeout);
             }
 
-            console.log("DEBUG debounce setto timeout")
             timeout = setTimeout(later, wait);
         });
     };

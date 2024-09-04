@@ -70,3 +70,14 @@ export function getAudioId(mapMarkerId: string): string {
     if (id.includes(':')) console.warn('Warning: getAudioId returned an id containing the : character. Do you have marker ids ending with ":" ?')
     return id ? id : mapMarkerId
 }
+
+
+export function isAudioMarker(marker: MapMarkerInfo): boolean {
+    const id = marker.markerId.split('-')[1].split(':')[0]
+    return id === 'audio'
+}
+
+export function isPOIMarker(marker: MapMarkerInfo): boolean {
+    const id = marker.markerId.split('-')[1].split(':')[0]
+    return id === 'poi'
+}
