@@ -1,40 +1,86 @@
 import PageContainer from "@/components/PageContainer";
 import { useLocalSearchParams } from "expo-router";
-import { Text, View } from "react-native";
+import { View, ScrollView } from "react-native";
+import { Text } from "react-native-paper";
 import { useFetch } from "@/hooks/useFetch";
-import { CartesianChart, Line } from "victory-native";
+
+// TODO: add charts and styling
+
+interface BackendData {
+    creator_username: string;
+    tags: {
+        bpm: number;
+        danceability: number;
+        loudness: number;
+        mood: Record<string, number>;
+        genre: Record<string, number>;
+        instrument: Record<string, number>;
+    };
+}
+
+interface useFetchData<T> {
+    data: T;
+    error: any;
+    isLoading: boolean;
+}
 
 export default function SongPage() {
     const { songid } = useLocalSearchParams();
 
-    const { data, error, isLoading } = useFetch(`/audio/${songid}`);
+    const { data, error, isLoading }: useFetchData<BackendData> = useFetch(
+        `/audio/${songid}`
+    );
 
-    const DATA = Array.from({ length: 31 }, (_, i) => ({
-        day: i,
-        highTmp: 40 + 30 * Math.random(),
-    }));
-
-    return (
-        <PageContainer className="p-10">
-            <Text>song #{songid}</Text>
-            {isLoading ? <Text>Loading...</Text>: <Text>{JSON.stringify(data, null, 2)}</Text>}
-            <View style={{ height: 300, padding: 20 }}>
-                <CartesianChart
-                    data={DATA}
-                    xKey="day"
-                    yKeys={["highTmp"]}
-                    // 👇 pass the font, opting in to axes.
-                    axisOptions={{}}
-                    >
-                    {({ points }) => (
-                        <Line
-                            points={points.highTmp}
-                            color="red"
-                            strokeWidth={3}
-                        />
-                    )}
-                </CartesianChart>
-            </View>
+    return isLoading ? (
+        <Text>Loading...</Text>
+    ) : (
+        <PageContainer className="p-10 bg-zinc-800 h-full flex flex-col gap-2">
+            <Text variant="titleLarge">song #{songid}</Text>
+            <ScrollView>
+                <Text>Uploaded by @{data.creator_username}</Text>
+                <Text>Bpm: {data.tags.bpm}</Text>
+                <Text>Danceability: {data.tags.danceability}</Text>
+                <Text>Loudness: {data.tags.loudness}</Text>
+                <View className="flex m-4">
+                    <Text>Top 5 moods:</Text>
+                    {Object.entries(data.tags.mood)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([key, value]) => {
+                            return (
+                                <Text key={key}>
+                                    {key}: {value}
+                                </Text>
+                            );
+                        })}
+                </View>
+                <View className="flex m-4">
+                    <Text>Top 5 genres:</Text>
+                    {Object.entries(data.tags.genre)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([key, value]) => {
+                            return (
+                                <Text key={key}>
+                                    {key}: {value}
+                                </Text>
+                            );
+                        })}
+                </View>
+                <View className="flex m-4">
+                    <Text>Top 5 instruments:</Text>
+                    {Object.entries(data.tags.instrument)
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 5)
+                        .map(([key, value]) => {
+                            return (
+                                <Text key={key}>
+                                    {key}: {value}
+                                </Text>
+                            );
+                        })}
+                </View>
+            </ScrollView>
         </PageContainer>
     );
 }

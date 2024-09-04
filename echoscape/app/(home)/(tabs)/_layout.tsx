@@ -6,13 +6,7 @@ import { CommonActions } from "@react-navigation/native";
 import { BottomTabHeaderProps } from "@react-navigation/bottom-tabs";
 
 import { Tabs as MaterialBottomTabs } from "expo-router/tabs";
-import { SafeAreaView, Text } from "moti";
-import { useNetwork } from "@/utils/network/NetworkProvider";
-
-import { Image } from "expo-image";
-import { MotiPressable } from "moti/interactions";
-import { router, useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { router } from "expo-router";
 
 const Header = (props: BottomTabHeaderProps) => {
     return <View></View>;
