@@ -8,7 +8,7 @@ import { NetworkProvider } from "@/utils/network/NetworkProvider";
 import { SWRConfig } from "swr";
 
 
-// assign this value to false if you want to disable all console.debug
+// assign this value to true if you want to disable all console.debug
 if (false) {
     console.debug = () => {};
 }

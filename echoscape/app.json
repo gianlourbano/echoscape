@@ -20,7 +20,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.gianlourbano.echoscape"
+      "bundleIdentifier": "com.gianlourbano.echoscape",
+      "infoPlist": {
+        "UIBackgroundModes": []
+      }
     },
     "android": {
       "adaptiveIcon": {
