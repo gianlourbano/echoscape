@@ -6,27 +6,56 @@ import { AuthProvider } from "@/utils/auth/AuthProvider";
 import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
 import { SWRConfig } from "swr";
-
+import { AppState } from "react-native";
 
 // assign this value to true if you want to disable all console.debug
 if (false) {
     console.debug = () => {};
 }
 
-
 export default function RootLayout() {
     return (
-        <SWRConfig>
+        <SWRConfig
+            value={{
+                provider: () => new Map(),
+                isVisible: () => {
+                    return true;
+                },
+                initFocus(callback) {
+                    let appState = AppState.currentState;
 
-        <SQLiteProvider databaseName="audios.db" onInit={migrateDbIfNeeded}>
-            <NetworkProvider>
-                <AuthProvider>
-                    <PaperProvider>
-                        <Slot />
-                    </PaperProvider>
-                </AuthProvider>
-            </NetworkProvider>
-        </SQLiteProvider>
+                    const onAppStateChange = (nextAppState) => {
+                        /* If it's resuming from background or inactive mode to active one */
+                        if (
+                            appState.match(/inactive|background/) &&
+                            nextAppState === "active"
+                        ) {
+                            callback();
+                        }
+                        appState = nextAppState;
+                    };
+
+                    // Subscribe to the app state change events
+                    const subscription = AppState.addEventListener(
+                        "change",
+                        onAppStateChange
+                    );
+
+                    return () => {
+                        subscription.remove();
+                    };
+                },
+            }}
+        >
+            <SQLiteProvider databaseName="audios.db" onInit={migrateDbIfNeeded}>
+                <NetworkProvider>
+                    <AuthProvider>
+                        <PaperProvider>
+                            <Slot />
+                        </PaperProvider>
+                    </AuthProvider>
+                </NetworkProvider>
+            </SQLiteProvider>
         </SWRConfig>
     );
 }
