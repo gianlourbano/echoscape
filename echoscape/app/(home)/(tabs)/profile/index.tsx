@@ -127,13 +127,7 @@ const ProfilePage = () => {
             <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
             <View className="p-4 flex justify-center gap-4">
                 <Text variant="titleLarge">Uploaded Audios</Text>
-                {isLoading ? (
-                    <Text>Loading...</Text>
-                ) : (
-                    data.map((audio) => {
-                        return <UploadedAudio key={audio.id} audio={audio} />;
-                    })
-                )}
+                
             </View>
             <ScrollView>
                 <RefreshControl

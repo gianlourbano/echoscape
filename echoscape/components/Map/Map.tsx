@@ -122,16 +122,17 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                     "poi"
                 )
             );
+            //add new pois without duplicates
             setMarkers((prevItems) => {
                 const markerMap = new Map();
 
                 prevItems.forEach((marker) => {
-                    const id = marker.markerId; // Estrai l'id dalla chiave
+                    const id = marker.markerId; 
                     markerMap.set(id, marker);
                 });
 
                 newPOIs.forEach((marker) => {
-                    const id = marker.markerId; // Estrai l'id dalla chiave
+                    const id = marker.markerId; 
                     markerMap.set(id, marker);
                 });
 
@@ -147,13 +148,10 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
         region: Region,
         details: Details
     ): Promise<void> {
-        if (true) {
+        if (details.isGesture !== false) {
             const DEBUG = true;
             if (DEBUG) {
-                console.log(
-                    `map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture}`
-                );
-                console.debug(`zoomLevel: ${getZoomLevel(region)}`);
+                console.debug(`map moved to lat: ${region.latitude}, lng: ${region.longitude} - user prompt movement: ${details.isGesture} zoomLevel: ${getZoomLevel(region)}`);
             }
             setRegion(region);
 
@@ -293,24 +291,24 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
         };
     }, [audiosToFetch]);
 
-    // const fetchRoute = async (startLat, startLng, endLat, endLng) => {
-    //     try {
-    //         const response = await fetch(
-    //             `${process.env.EXPO_PUBLIC_OSRM_API_URL}/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
-    //         );
-    //         const data = await response.json();
-    //         console.log(JSON.stringify(data, null, 2));
-    //         const routeCoords = data.routes[0].geometry.coordinates.map(
-    //             (point) => ({
-    //                 latitude: point[1],
-    //                 longitude: point[0],
-    //             })
-    //         );
-    //         setRouteCoordinates(routeCoords);
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    // };
+    const fetchRoute = async (startLat, startLng, endLat, endLng) => {
+        try {
+            const response = await fetch(
+                `${process.env.EXPO_PUBLIC_OSRM_API_URL}/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
+            );
+            const data = await response.json();
+            console.log(JSON.stringify(data, null, 2));
+            const routeCoords = data.routes[0].geometry.coordinates.map(
+                (point) => ({
+                    latitude: point[1],
+                    longitude: point[0],
+                })
+            );
+            setRouteCoordinates(routeCoords);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
     // pokemon go style circle
     // const [radius, setRadius] = useState(0);

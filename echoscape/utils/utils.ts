@@ -63,3 +63,19 @@ export function debounce<T extends (...args: any[]) => any>(func: T, wait: numbe
         });
     };
 }
+
+
+export const simpleDebounce = (func: (...args: any[]) => void, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    //console.log("simple debounce funtion called with ", delay, " milliseconds delay")
+    //console.log("debounce timeoutId ", !!timeoutId)
+    return (...args: any[]) => {
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        timeoutId = setTimeout(() => {
+            //console.log("funzione dentro debounce chiamata")
+            func(...args);
+        }, delay);
+    };
+};

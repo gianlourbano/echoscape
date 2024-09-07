@@ -17,6 +17,8 @@ import { useAudioDB, AudioData } from "@/utils/sql/sql";
 import { sendOverpassRequest } from "@/utils/overpass/request";
 import PageContainer from "@/components/PageContainer";
 
+import { uploadAudio } from "@/utils/tasks/audioUpload";
+
 export default function Page() {
     const [recordings, setRecordings] = useState<string[]>([]);
 
@@ -59,8 +61,8 @@ export default function Page() {
         loadRecordings();
     };
 
-    const netInfo = useNetInfo();
-
+    //RIMOSSO PER SPOSTARE L'UPLOAD IN UN ALTRO FILEconst netInfo = useNetInfo();
+/*
     const uploadAudio = async (uri: string) => {
         if (netInfo.isConnected && netInfo.isInternetReachable) {
             console.log("[AUDIO UP] Audio can be uploaded!");
@@ -98,7 +100,7 @@ export default function Page() {
                 console.log(r);
             });
         }
-    };
+    };*/
 
     useEffect(() => {
         loadRecordings();
@@ -137,7 +139,7 @@ export default function Page() {
                                 />
                                 <View className="flex flex-row w-full gap-2 justify-evenly">
                                     <Button onPress={() => {}}>Delete</Button>
-                                    <Button onPress={() => uploadAudio(file)}>
+                                    <Button onPress={() => uploadAudio(file, loadRecordings)}>
                                         Upload
                                     </Button>
                                 </View>

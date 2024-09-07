@@ -6,6 +6,18 @@ import { AuthProvider } from "@/utils/auth/AuthProvider";
 import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
 import { SWRConfig } from "swr";
+import { useEffect } from "react";
+import { defineNetworkCheckTask, defineTestTask, registerNetworkCheckTask, registerTestTask } from "@/utils/tasks/taskDefinitions";
+import * as TaskManager from 'expo-task-manager';
+import { AppState } from "react-native";
+import { setNotificationHandler } from "expo-notifications";
+import { sendNotification, setNotificationsHandler } from "@/utils/notifications/manageNotifications";
+import NetInfo from '@react-native-community/netinfo';
+import { AudioData, useAudioDB } from "@/utils/sql/sql";
+import { uploadAudio } from "@/utils/tasks/audioUpload";
+import { simpleDebounce } from "@/utils/utils";
+
+
 
 
 // assign this value to true if you want to disable all console.debug
@@ -14,7 +26,42 @@ if (false) {
 }
 
 
+
+
 export default function RootLayout() {
+      
+
+    useEffect(() => {
+        // notifications
+        setNotificationsHandler()
+
+        //debug
+        AppState.addEventListener("change", () => {
+            console.log("app state changed! : ", AppState.currentState)
+        });
+
+
+        NetInfo.addEventListener(simpleDebounce( async state => {
+            const { getToBeUploadedAudioData } = useAudioDB();
+            
+            console.log(`[network listener] state.type: ${state.type}, state.isConnected: ${state.isConnected} `)
+            
+            sendNotification({title: "netInfo event listener", body: `connection type ${state.type}, is connected ${state.isConnected}`})
+            if (state.isConnected) {
+                sendNotification({title: "uploading audios", body: "unified notification for audio upload"})
+                const toBeUploadedAudios: AudioData[] = await getToBeUploadedAudioData()
+                
+                console.log(`[network listener] toBeUploadedAudios (length ${toBeUploadedAudios.length}) ${toBeUploadedAudios}`)
+                
+                toBeUploadedAudios.forEach((item) => {
+                    console.log(`attempting to upload ${item.uri}...`)
+                    uploadAudio(item.uri)
+                })
+            }
+        }, 5000))
+            
+    }, [])
+
     return (
         <SWRConfig>
 

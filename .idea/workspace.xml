@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="6fefe543-2cda-4acc-9c73-80a86c69476e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/echoscape/app/(home)/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/app/(home)/index.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/echoscape/components/MarkerModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/components/MarkerModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/app/(home)/(tabs)/profile/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/app/(home)/(tabs)/profile/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/app/(home)/debug/index.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/app/(home)/debug/index.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/app/_layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/app/_layout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/components/Map/Map.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/components/Map/Map.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/echoscape/utils/tasks/taskDefinitions.ts" beforeDir="false" afterPath="$PROJECT_DIR$/echoscape/utils/tasks/taskDefinitions.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
