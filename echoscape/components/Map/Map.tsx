@@ -21,9 +21,9 @@ import {
 import { useFetch } from "@/hooks/useFetch";
 import { debounce } from "@/utils/utils";
 import { sendOverpassRequest } from "@/utils/overpass/request";
-import { Link } from "expo-router";
-import { IconButton } from "react-native-paper";
-import { Cluster, MapClusterer } from "@/utils/markers/clustering";
+import { Link, router } from "expo-router";
+import { Icon, IconButton } from "react-native-paper";
+import { Cluster } from "@/utils/markers/clustering";
 import Supercluster, { PointFeature } from "supercluster";
 
 /*
@@ -60,11 +60,16 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
 
     //ids, lat and lng of all audios
     const [audioAllArray, setAudioAllArray] = useState<MapMarkerInfo[]>([]);
+    const [areMarkersClustering, setAreMarkersClustering] = useState(false);
     const clusterer = useMemo(() => {
+        setAreMarkersClustering(true);
         const toBeClustered = audioAllArray.map((item) => {
             return {
                 type: "Feature",
-                properties: { name: item.markerId },
+                properties: {
+                    name: item.markerId,
+                    type: item.markerId.split(":")[0].split("-")[1],
+                },
                 geometry: {
                     type: "Point",
                     coordinates: [item.position.lng, item.position.lat],
@@ -75,6 +80,7 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
             // @ts-ignore
         }).load(toBeClustered);
 
+        setAreMarkersClustering(false);
         return c;
     }, [audioAllArray]);
 
@@ -122,22 +128,15 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                     "poi"
                 )
             );
-            //add new pois without duplicates
-            setMarkers((prevItems) => {
-                const markerMap = new Map();
 
-                prevItems.forEach((marker) => {
-                    const id = marker.markerId; 
-                    markerMap.set(id, marker);
-                });
+            const total = [...markers, ...newPOIs];
+            // filter out duplicates
+            const unique = total.filter(
+                (v, i, a) => a.findIndex((t) => t.markerId === v.markerId) === i
+            );
 
-                newPOIs.forEach((marker) => {
-                    const id = marker.markerId; 
-                    markerMap.set(id, marker);
-                });
+            setMarkers(unique);
 
-                return Array.from(markerMap.values());
-            });
             //console.log("DEBUG NEW POIs: ", newPOIs)
             //console.log("DEBUG markers: ", markers)
         },
@@ -156,14 +155,14 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
             setRegion(region);
 
             const zoomLevel = getZoomLevel(region);
-            if (zoomLevel >= 14) {
-                setAudiosToFetch(
-                    await composeAudiosToFetchArray(region, audioAllArray)
-                );
-            }
-            if (zoomLevel >= 16) {
-                debounceFetchPOIs(regionToLatLng(region));
-            }
+            // if (zoomLevel >= 14) {
+            //     setAudiosToFetch(
+            //         await composeAudiosToFetchArray(region, audioAllArray)
+            //     );
+            // }
+            // if (zoomLevel >= 15) {
+            //     debounceFetchPOIs(regionToLatLng(region));
+            // }
 
             const bbox = [
                 region.longitude - region.longitudeDelta,
@@ -188,7 +187,6 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                     type: item.geometry.type,
                 };
             });
-            console.log("Total clusters: ", processedClusters.length);
             setClusters(processedClusters);
         }
     }
@@ -243,10 +241,6 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
         })();
     }, []);
 
-    useEffect(() => {
-        // calculate bbox from region
-    }, [region]);
-
     /*
         fetches and loads into cache one audio data at a time, while the user sees the correspondent marker on the map, if the map is zoomed enough
     */
@@ -281,7 +275,7 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                 );
                 clearInterval(intervalId);
             }
-        }, 1000);
+        }, 100);
 
         return () => {
             console.debug(
@@ -331,8 +325,9 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
             style={styles.map}
             region={region}
             onRegionChangeComplete={handleRegionChange}
-            showsUserLocation={true}
+            //showsUserLocation={true}
             showsMyLocationButton={true}
+            showsPointsOfInterest={false}
             onLongPress={(e) =>
                 console.log(JSON.stringify(e.nativeEvent, null, 2))
             }
@@ -346,7 +341,9 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                         latitude: userLocation?.coords.latitude ?? 0,
                         longitude: userLocation?.coords.longitude ?? 0,
                     }}
-                />
+                >
+                    <IconButton icon="language-cpp" size={40}></IconButton>
+                </Marker>
             ) : null}
 
             {/* {markers.map((marker) => (
@@ -358,11 +355,28 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                     }}
                     icon={marker.icon}
                 >
-                    <Link href={`/song/${getAudioId(marker.markerId)}`}>
-                        <IconButton icon="music" size={50}></IconButton>
-                    </Link>
+                    <Text className="text-4xl">{marker.icon}</Text>
                 </Marker>
             ))} */}
+
+            <Marker
+                key="casa-del-patron"
+                coordinate={{
+                    latitude: 44.49438,
+                    longitude: 11.363488,
+                }}
+            >
+                <IconButton icon="language-haskell" size={40}></IconButton>
+            </Marker>
+            <Marker
+                key="casa-dei-presi-a-male"
+                coordinate={{
+                    latitude: 44.478343,
+                    longitude: 11.367605,
+                }}
+            >
+                <IconButton icon="matrix" size={40}></IconButton>
+            </Marker>
 
             {clusters.map((cluster, index) => {
                 return (
@@ -375,29 +389,54 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
                             latitude: cluster.center.lat,
                             longitude: cluster.center.lng,
                         }}
+                        stopPropagation
                     >
                         {cluster.properties.cluster ? (
-                            <Callout>
-                                {clusterer
-                                    .getLeaves(
-                                        cluster.properties.cluster_id,
-                                        Infinity
-                                    )
-                                    .map((leaf) => (
-                                        <Text key={leaf.properties.name}>
-                                            {leaf.properties.name}
-                                        </Text>
-                                    ))}
-                            </Callout>
+                            <Icon source="playlist-music" size={40}></Icon>
                         ) : (
-                            <Link
-                                href={`/song/${getAudioId(
-                                    cluster.properties.name
-                                )}`}
-                            >
-                                <IconButton icon="music" size={50}></IconButton>
-                            </Link>
+                            <IconButton
+                                icon={
+                                    cluster.properties.type === "audio"
+                                        ? "music-note"
+                                        : "pokemon-go"
+                                }
+                                size={40}
+                                onPress={() => {
+                                    cluster.properties.type ==="audio" && router.navigate(
+                                        `/song/${getAudioId(
+                                            cluster.properties.name
+                                        )}`
+                                    );
+                                }}
+                            ></IconButton>
                         )}
+                        {!areMarkersClustering &&
+                            cluster.properties.cluster && (
+                                <Callout style={{ width: "auto" }}>
+                                    <View className="flex flex-col gap-2">
+                                        {clusterer
+                                            .getLeaves(
+                                                cluster.properties.cluster_id,
+                                                Infinity
+                                            )
+                                            .map((leaf) => (
+                                                <Link
+                                                    href={`/song/${getAudioId(
+                                                        leaf.properties.name
+                                                    )}`}
+                                                    key={leaf.properties.name}
+                                                >
+                                                    Audio #
+                                                    {
+                                                        leaf.properties.name.split(
+                                                            ":"
+                                                        )[1]
+                                                    }
+                                                </Link>
+                                            ))}
+                                    </View>
+                                </Callout>
+                            )}
                     </Marker>
                 );
             })}

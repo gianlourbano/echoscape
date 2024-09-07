@@ -1,5 +1,9 @@
-
-
+import { useCallback, useEffect, useRef } from "react";
+import { BBox, Region } from "../markers/types";
+import { useFetch } from "@/hooks/useFetch";
+import { coordsToGeoJSONFeature, regionToBBox } from "../markers/utils";
+import useSWRMutation from "swr/mutation";
+import { getZoomLevel } from "../map/mapUtils";
 
 /*
 https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
@@ -43,8 +47,11 @@ export async function sendOverpassRequest(
 
     //console.log("DEBUG OVERPASS: ", result)
 
-    return result.elements
+    return result.elements;
 }
+
+
+
 
 function pickOneSkipTwo<T>(array: T[]): T[] {
     return array.filter((_, index) => index % 4 === 0);
@@ -89,3 +96,89 @@ export async function fetchOverpass(query) {
     }
 }
 
+const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.05) => {
+    if (!prevBBox) return true;
+
+    const latDiff =
+        Math.abs(prevBBox.north - newBBox.north) / Math.abs(prevBBox.north);
+    const lonDiff =
+        Math.abs(prevBBox.east - newBBox.east) / Math.abs(prevBBox.east);
+
+    return latDiff > threshold || lonDiff > threshold;
+};
+
+export const usePOIs = (region: Region) => {
+    const oldBBox = useRef(null);
+
+    const fetcher = useCallback(
+        async (url: string | URL, { arg }: { arg: BBox }) => {
+            return await fetch(url, {
+                method: "POST",
+                body:
+                    "data=" +
+                    encodeURIComponent(`
+                [bbox:${arg[1]},${arg[0]},${arg[3]},${arg[2]}]
+                [out:json]
+                ;
+                
+                    node
+                    ["historic"~"."]
+                    ["name"];
+                    
+                
+                out geom;
+            `),
+            })
+                .then((res) => res.json())
+                .then((data) => data.elements)
+                .then((elements) => {
+                    return elements.map((element, index) => {
+                        return coordsToGeoJSONFeature(
+                            { lat: element.lat, lng: element.lon },
+                            {
+                                name: element.tags.name,
+                                type: "poi",
+                                id: "poi-" + index,
+                                wikidata: element.tags.wikidata
+                                    ? "https://www.wikidata.org/wiki/" +
+                                      element.tags.wikidata
+                                    : undefined,
+                                wikipedia: element.tags.wikipedia
+                                    ? "https://en.wikipedia.org/wiki/" +
+                                      element.tags.wikipedia.replace(" ", "_")
+                                    : undefined,
+                            }
+                        );
+                    });
+                });
+        },
+        [region]
+    );
+
+    const { data, isMutating, trigger } = useSWRMutation(
+        process.env.EXPO_PUBLIC_OVERPASS_API_URL,
+        fetcher
+    );
+
+    useEffect(() => {
+        const newBBox = regionToBBox(region);
+        const zoomLevel = getZoomLevel(region);
+        if (
+            !hasBBoxChangedSignificantly(oldBBox.current, newBBox) ||
+            zoomLevel < 15
+        ) {
+            return;
+        }
+        console.debug(
+            "BBox has changed significantly, triggering overpass request"
+        );
+
+        oldBBox.current = newBBox;
+        trigger(newBBox);
+    }, [region]);
+
+    return {
+        data,
+        isLoading: isMutating,
+    };
+};

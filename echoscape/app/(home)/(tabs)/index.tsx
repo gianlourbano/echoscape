@@ -1,15 +1,15 @@
 import { View, StyleSheet } from "react-native";
-import MapComponent from "@/components/Map/Map";
+import Map from "@/components/Map/Map";
 import { Link, useLocalSearchParams } from "expo-router";
+import ClusteredMap from "@/components/Map/ClusteredMap"
 
 export default function MapPage() {
     const {latitude, longitude} = useLocalSearchParams<{longitude?: string, latitude?: string}>();
-    //console.log(latitude, longitude);
 
     return (
         <View style={styles.container}>
             <Link href="/modal">Modal</Link>
-            <MapComponent initialLatitude={latitude} initialLongitude={longitude}/>
+            <ClusteredMap initialLatitude={latitude} initialLongitude={longitude}/>
         </View>
     );
 }
