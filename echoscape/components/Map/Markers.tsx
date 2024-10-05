@@ -1,8 +1,9 @@
 import SuperclusterClass from "@/utils/markers/supercluster";
 import SuperclusterNS from "@/utils/markers/types";
 import { Link } from "expo-router";
+import { useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
-import { Callout } from "react-native-maps";
+import { Callout, Marker } from "react-native-maps";
 import { Badge, Icon, IconButton } from "react-native-paper";
 
 interface MarkerProps {

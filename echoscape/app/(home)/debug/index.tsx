@@ -9,7 +9,6 @@ import { TouchableOpacity, View, StyleSheet, TextInput } from "react-native";
 import MapView, { UrlTile } from "react-native-maps";
 import { Surface, Button, Text, Card } from "react-native-paper";
 import * as TaskManager from 'expo-task-manager';
-import { defineTestTask, registerTestTask, unregisterTestTask } from "@/utils/tasks/taskDefinitions";
 import { sendNotification } from "@/utils/notifications/manageNotifications";
 import { AudioData, useAudioDB } from "@/utils/sql/sql";
 import { simpleDebounce } from "@/utils/utils";

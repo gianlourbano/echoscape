@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import MapView, {  MapMarkerProps, Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import MapView, {  LatLng, MapMarkerProps, MapPressEvent, Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import { useClusterer } from "@/utils/markers/clustering";
 import { useFetch } from "@/hooks/useFetch";
 import {  IconButton } from "react-native-paper";
@@ -8,6 +8,7 @@ import { coordsToGeoJSONFeature, isPointCluster } from "@/utils/markers/utils";
 import { memes } from "@/utils/markers/memes";
 import { usePOIs } from "@/utils/overpass/request";
 import { ClusterMarker, render } from "./Markers";
+import DirectionsSelector from "./DirectionsSelector";
 
 const MemoizedMarker = memo(
     ({ coordinate, children, ...props }: MapMarkerProps) => {
@@ -29,6 +30,12 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
 
     const [showAudios, setShowAudios] = useState(true);
     const [showPOIs, setShowPOIs] = useState(true);
+
+    const [onMapPressMarkerCoordinates, setOnMapPressMarkerCoordinates] = useState<{latitude: number, longitude: number} | null>(null)
+    const [showDirectionsMenu, setShowDirectionsMenu] = useState<boolean>(false)
+    const [directionsOnMapPressEvent, setDirectionsOnMapPressEvent] = useState<LatLng | null>(null)
+
+    const [polylineCoords, setPolylineCoords] = useState<LatLng[]>([])
 
     useEffect(() => {
         if (initialLatitude && initialLongitude)
@@ -93,6 +100,36 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
         [data, POIs]
     );
 
+    function onMapPress(event: MapPressEvent) {
+        event.persist();
+        console.log("event: ", event?.nativeEvent.coordinate ?? "null")
+
+        //triggers directions menu actions if needed
+        setDirectionsOnMapPressEvent(prev => {
+                                        if (event && event.nativeEvent) return event.nativeEvent.coordinate
+                                        else return null
+                                    })  
+
+        //alternates between putting a marker on the map when pressing it and deleting it when pressing elsewhere
+        if (onMapPressMarkerCoordinates) {
+            setOnMapPressMarkerCoordinates(null)
+        }
+        else {   
+            setOnMapPressMarkerCoordinates(event?.nativeEvent.coordinate ?? null)
+        }
+    }
+
+    function handleDirectionsButtonPress() {
+        console.log("DEBUG (rimuovere log) bottone premuto! showDirectionsMenu: ", showDirectionsMenu)
+        setShowDirectionsMenu(prev => !prev)
+    }
+
+
+    useEffect(() => {
+        console.log("DEBUG clustered map component mounted")
+
+    }, [])
+
     const [points, supercluster] = useClusterer(
         applyTransform(showAudios ? data : [], showPOIs ? POIs : []),
         {
@@ -104,6 +141,7 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
     );
 
     return (
+    <>
         <MapView
             style={styles.map}
             region={region}
@@ -114,6 +152,7 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
                 console.log(JSON.stringify(e.nativeEvent, null, 2))
             }
             showsUserLocation
+            onPress={onMapPress}
         >
             {points?.map((point) => (
                 // These should be memoized components,
@@ -133,21 +172,51 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
                     )}
                 </MemoizedMarker>
             ))}
-            <View style={styles.buttons}>
-                <IconButton
-                    icon={!showAudios ? "music-note-off-outline" : "music-note-outline"}
-                    size={40}
-                    onPress={() => setShowAudios(!showAudios)}
-                ></IconButton>
-                <IconButton
-                    icon={!showPOIs ? "map-marker-off-outline" : "map-marker-outline"}
-                    size={40}
-                    onPress={() => setShowPOIs(!showPOIs)}
-                ></IconButton>
-            </View>
+
+            {onMapPressMarkerCoordinates ? 
+            <Marker
+                coordinate={onMapPressMarkerCoordinates}>
+            </Marker> 
+            : <></>}
+
+            <Polyline coordinates={polylineCoords}/>
+
         </MapView>
+
+        <View style={styles.buttons}>
+            <IconButton
+                icon={!showAudios ? "music-note-off-outline" : "music-note-outline"}
+                size={40}
+                onPress={() => setShowAudios(!showAudios)}
+            ></IconButton>
+            <IconButton
+                icon={!showPOIs ? "map-marker-off-outline" : "map-marker-outline"}
+                size={40}
+                onPress={() => setShowPOIs(!showPOIs)}
+            ></IconButton>
+            <IconButton
+                icon={"directions-fork"}
+                size={40}
+                onPress={handleDirectionsButtonPress}
+            >
+
+            </IconButton>
+        </View>
+
+        {showDirectionsMenu ? 
+        <View style={{ position: 'absolute', top: 0, zIndex: 1, width: '100%' }}>
+            <DirectionsSelector 
+                onClose={handleDirectionsButtonPress}
+                onMapPressEventCoords={directionsOnMapPressEvent}
+                onRouteCompute={setPolylineCoords}
+            />
+        </View>
+        :
+        <></>}
+    </>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

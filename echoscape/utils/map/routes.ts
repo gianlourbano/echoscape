@@ -26,6 +26,29 @@ export const fetchRoute = async (startLat, startLng, endLat, endLng, setRouteCoo
     }
 };
 
+/*
+given the response to overpass request, returns a list of LatLng objects containing the node of the route
+*/
+const extractCoordinates = (data: any): LatLng[] => {
+    if (!data || !data.routes || !data.routes[0] || !data.routes[0].geometry || !data.routes[0].geometry.coordinates) {
+        return [];
+    }
+
+    const coordinates = data.routes[0].geometry.coordinates;
+    return coordinates.map((coord: [number, number]) => ({
+        latitude: coord[1],
+        longitude: coord[0],
+    }));
+};
+
+
+/*
+given starting point and ending point, 
+returns a list of LatLng objects of the route fetched by overpass from start point to end point
+*/
+export async function getRouteNodes(startLat: number, startLng: number, endLat: number, endLng: number): Promise<LatLng[]> {
+    return extractCoordinates(await fetchRoute(startLat, startLng, endLat, endLng))
+}
 
 
 /*

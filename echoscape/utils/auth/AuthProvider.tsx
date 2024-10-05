@@ -32,7 +32,7 @@ const getToken = async (payload: { username: string; password: string }) => {
     });
 
     if (!res) {
-        console.log("Error while fetching token");
+        console.log(`Error while fetching token, request was to ${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/auth/token, body: username=${payload.username}&password=${payload.password}`);
         return { error: "server-500" };
     }
 

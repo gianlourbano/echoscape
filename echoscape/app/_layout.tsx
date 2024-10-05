@@ -7,7 +7,6 @@ import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
 import { SWRConfig } from "swr";
 import { useEffect } from "react";
-import { defineNetworkCheckTask, defineTestTask, registerNetworkCheckTask, registerTestTask } from "@/utils/tasks/taskDefinitions";
 import * as TaskManager from 'expo-task-manager';
 import { AppState } from "react-native";
 import { setNotificationHandler } from "expo-notifications";
@@ -59,6 +58,8 @@ export default function RootLayout() {
                 })
             }
         }, 5000))
+
+        console.log("DEBUG root layout mounted")
             
     }, [])
 
