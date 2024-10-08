@@ -1,5 +1,4 @@
-import { LatLng } from "react-native-maps/lib/sharedTypes";
-
+import { LatLng } from "react-native-maps";
 
 /*
 fetches a route from open street map
@@ -27,6 +26,8 @@ export const fetchRoute = async (startLat, startLng, endLat, endLng, setRouteCoo
 };
 
 /*
+DEPRECATED FUNCTION
+i made it then i realized it's useless
 given the response to overpass request, returns a list of LatLng objects containing the node of the route
 */
 const extractCoordinates = (data: any): LatLng[] => {
@@ -47,7 +48,8 @@ given starting point and ending point,
 returns a list of LatLng objects of the route fetched by overpass from start point to end point
 */
 export async function getRouteNodes(startLat: number, startLng: number, endLat: number, endLng: number): Promise<LatLng[]> {
-    return extractCoordinates(await fetchRoute(startLat, startLng, endLat, endLng))
+    const routeFetched = await fetchRoute(startLat, startLng, endLat, endLng)
+    return routeFetched
 }
 
 
