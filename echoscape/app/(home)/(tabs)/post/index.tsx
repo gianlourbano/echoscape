@@ -1,68 +1,107 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { Button } from "react-native-paper";
-import { useNetInfo } from "@react-native-community/netinfo";
-
-import { View as MotiView, AnimatePresence } from "moti";
-
-import * as FileSystem from "expo-file-system";
-import { getUserBaseURI, getUserTmpUri } from "@/utils/fs/fs";
-
-import { usePlaySound, useRecordSound } from "@/hooks/useSound";
-
-import { Audio, AudioProps } from "@/components/Audio/Audio";
-import { useSQLiteContext } from "expo-sqlite";
-import { useAudioDB, AudioData } from "@/utils/sql/sql";
-
-import { sendOverpassRequest } from "@/utils/overpass/request";
 import PageContainer from "@/components/PageContainer";
+import { View, Text, TouchableOpacity, Animated } from "react-native";
+import { useState, useEffect } from "react";
+import { Audio } from "expo-av";
+import { IconButton, Button } from "react-native-paper";
+import { getUserTmpUri } from "@/utils/fs/fs";
+import * as FileSystem from "expo-file-system";
+import { useLocalSearchParams } from "expo-router";
+import { Audio as AudioComponent } from "@/components/Audio/Audio";
+import { useNetInfo } from "@react-native-community/netinfo";
+import { useAudioDB } from "@/utils/sql/sql";
 
-import { uploadAudio } from "@/utils/tasks/audioUpload";
+type AudioItem = {
+    id: string;
+    uri: string;
+    status: "pending" | "uploading" | "completed" | "failed";
+};
 
-export default function Page() {
-    const [recordings, setRecordings] = useState<string[]>([]);
+export type AudioPageProps = {
+    lat?: string;
+    lng?: string;
+};
 
-    const { startRecording, stopRecording } = useRecordSound();
-    const { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData } = useAudioDB();
+export default function Page({}) {
+    const { lat, lng } = useLocalSearchParams<AudioPageProps>();
 
-    const [isRecording, setIsRecording] = useState(false); //used for conditionalButton
+    if (lat && lng) {
+        //...
+    } // /post?lat=123&lng=456
 
-    const [recordedAudioUri, setRecordedAudioUri] = useState<
-        string | null | undefined
-    >();
+    const netInfo = useNetInfo();
 
-   
+    const [sound, setSound] = useState<Audio.Sound | null>(null);
+    const [recording, setRecording] = useState<Audio.Recording | null>(null);
+    const [audioItems, setAudioItems] = useState<string[]>([]);
 
     async function loadRecordings() {
         const dir = await getUserTmpUri();
         const recordings = await FileSystem.readDirectoryAsync(dir);
         console.log("recordings: ", recordings);
-        setRecordings(
+        setAudioItems(
             recordings.map((recording) => dir + "/" + recording).reverse()
         );
     }
 
-    const stopRecordingAndSaveTmp = async () => {
-        const uri = await stopRecording();
-
-        const dir = await getUserTmpUri();
-        const filename = `recording-${Date.now()}.wav`;
-
-        await FileSystem.moveAsync({
-            from: uri,
-            to: dir + "/" + filename,
-        });
-
-        // await addAudioData(filename).then(async () => {
-        //     const r = await getAudioData();
-        //     console.log(r);
-        // });
-
+    useEffect(() => {
         loadRecordings();
-    };
+    }, []);
 
-    //RIMOSSO PER SPOSTARE L'UPLOAD IN UN ALTRO FILEconst netInfo = useNetInfo();
-/*
+    useEffect(() => {
+        return sound
+            ? () => {
+                  sound.unloadAsync();
+              }
+            : undefined;
+    }, [sound]);
+
+    async function startRecording() {
+        try {
+            await Audio.requestPermissionsAsync();
+            await Audio.setAudioModeAsync({
+                allowsRecordingIOS: true,
+                playsInSilentModeIOS: true,
+            });
+
+            const { recording } = await Audio.Recording.createAsync(
+                Audio.RecordingOptionsPresets.HIGH_QUALITY
+            );
+            setRecording(recording);
+        } catch (err) {
+            console.error("Failed to start recording", err);
+        }
+    }
+
+    const { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData } = useAudioDB();
+
+
+    async function stopRecording() {
+        if (!recording) return;
+
+        await recording.stopAndUnloadAsync();
+        const uri = recording.getURI();
+        setRecording(null);
+
+        if (uri) {
+            const newItem: AudioItem = {
+                id: Date.now().toString(),
+                uri,
+                status: "pending",
+            };
+
+            const dir = await getUserTmpUri();
+            const filename = `recording-${Date.now()}.wav`;
+            const to = `${dir}/${filename}`;
+
+            await FileSystem.moveAsync({
+                from: uri,
+                to: to,
+            });
+
+            setAudioItems([...audioItems, to]);
+        }
+    }
+
     const uploadAudio = async (uri: string) => {
         if (netInfo.isConnected && netInfo.isInternetReachable) {
             console.log("[AUDIO UP] Audio can be uploaded!");
@@ -100,79 +139,60 @@ export default function Page() {
                 console.log(r);
             });
         }
-    };*/
-
-    useEffect(() => {
-        loadRecordings();
-    }, []);
+    };
 
     return (
-        <PageContainer className="flex flex-1 flex-col">
-            <View className="h-[30%]">
-                <Button onPress={() => startRecording()}>Record</Button>
-                <Button onPress={() => stopRecordingAndSaveTmp()}>Stop</Button>
-                <Button onPress={() => deleteAllAudioData()}>
-                    DELETE EVERYTHING
-                </Button>
-                <Button onPress={async () => console.log(await getAudioData())}>PRINT DATA</Button>
+        <PageContainer className="flex-1 bg-zinc-700">
+            <View>
+                <Text className="text-2xl font-bold text-center text-white">
+                    Record audio
+                </Text>
             </View>
-            <ScrollView className=" scroll-pb-10 rounded-t-lg">
-                <View className="flex flex-col gap-2 w-full rounded-t-lg pb-10">
-                    <AnimatePresence>
-                        {recordings.map((file, index) => (
-                            <MotiView
-                                key={file + index}
-                                className="flex flex-col bg-slate-600 p-4 rounded-lg"
-                                from={{
-                                    opacity: 0,
-                                    translateY: 10,
-                                }}
-                                animate={{
-                                    opacity: 1,
-                                    translateY: 0,
-                                }}
-                            >
-                                <Audio
-                                    index={index + 1}
-                                    name={file}
-                                    refresh={() => loadRecordings()}
-                                />
-                                <View className="flex flex-row w-full gap-2 justify-evenly">
-                                    <Button onPress={() => {}}>Delete</Button>
-                                    <Button onPress={() => uploadAudio(file, loadRecordings)}>
-                                        Upload
-                                    </Button>
-                                </View>
-                            </MotiView>
-                        ))}
-                    </AnimatePresence>
+            <View>
+                <Text className="text-lg text-center text-white">
+                    Record audio and upload it!
+                </Text>
+                <View className="flex-row items-center justify-center">
+                    <IconButton
+                        icon="microphone"
+                        onPress={recording ? stopRecording : startRecording}
+                    />
+                    <Text className="text-center mt-2 text-gray-600">
+                        {recording
+                            ? "Tap to stop recording"
+                            : "Tap to start recording"}
+                    </Text>
                 </View>
-            </ScrollView>
+                <View className="flex flex-col gap-4">
+                    {audioItems.length > 0 &&
+                        audioItems.map((item, index) => {
+                            return (
+                                <View key={item}>
+                                    <AudioComponent
+                                        index={index}
+                                        name={item}
+                                        refresh={loadRecordings}
+                                    />
+                                    
+                                    <View className="flex flex-row w-full gap-2 justify-evenly">
+                                        <Button onPress={() => {}}>
+                                            Delete
+                                        </Button>
+                                        <Button
+                                            onPress={() =>
+                                                uploadAudio(
+                                                    item
+                                                )
+                                            }
+                                        >
+                                            Upload
+                                        </Button>
+                                    </View>
+                                </View>
+                            );
+                        })}
+                </View>
+            </View>
         </PageContainer>
     );
-
 }
-
-const styles = StyleSheet.create({
-    
-    container: {
-        flex: 1,
-        padding: 24,
-        paddingBottom: 0,
-        overflow: "scroll",
-    },
-    main: {
-        flex: 1,
-        justifyContent: "center",
-        maxWidth: 960,
-        marginHorizontal: "auto",
-    },
-    title: {
-        fontSize: 64,
-        fontWeight: "bold",
-    },
-    subtitle: {
-        fontSize: 36,
-        color: "#38434D",
-    },
-});

@@ -43,7 +43,8 @@ export default function RootLayout() {
         upload audios when eventually connection is available
         */
         NetInfo.addEventListener(simpleDebounce( async state => {
-            const { getToBeUploadedAudioData } = useAudioDB();
+
+            const { getToBeUploadedAudioData } = useAudioDB(); // TODO: this is a hack, find a better solution @busniz
             
             console.log(`[network listener] state.type: ${state.type}, state.isConnected: ${state.isConnected} `)
             
