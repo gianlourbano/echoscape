@@ -23,7 +23,7 @@ export const cachedFetch: typeof fetch = async (
             headers: response.headers
         });
     } catch (error) {
-        console.error('Failed to fetch and cache resource:', error);
+        console.error('Failed to fetch ', url,' and cache resource:', error);
         return fetch(url, options);
     }
 };

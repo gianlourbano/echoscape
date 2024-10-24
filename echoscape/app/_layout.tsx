@@ -28,8 +28,7 @@ if (false) {
 
 
 export default function RootLayout() {
-      
-
+    
     useEffect(() => {
         // notifications
         setNotificationsHandler()
@@ -40,6 +39,9 @@ export default function RootLayout() {
         });
 
 
+        /*
+        upload audios when eventually connection is available
+        */
         NetInfo.addEventListener(simpleDebounce( async state => {
             const { getToBeUploadedAudioData } = useAudioDB();
             

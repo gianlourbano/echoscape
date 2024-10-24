@@ -1,6 +1,8 @@
 import { memo, useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import MapView, {  LatLng, MapMarkerProps, MapPressEvent, Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
+import { MapMarkerProps, MapPressEvent } from "react-native-maps"
+import {  LatLng, Marker, Polyline, PROVIDER_GOOGLE, UrlTile } from "react-native-maps";
+import MapView from "react-native-maps";
 import { useClusterer } from "@/utils/markers/clustering";
 import { useFetch } from "@/hooks/useFetch";
 import {  IconButton } from "react-native-paper";
@@ -9,6 +11,8 @@ import { memes } from "@/utils/markers/memes";
 import { usePOIs } from "@/utils/overpass/request";
 import { ClusterMarker, render } from "./Markers";
 import DirectionsSelector from "./DirectionsSelector";
+import POIListModal from "../MarkerModals/POIListModal";
+import { POICardProps } from "../MarkerModals/POICard";
 
 const MemoizedMarker = memo(
     ({ coordinate, children, ...props }: MapMarkerProps) => {
@@ -31,11 +35,15 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
     const [showAudios, setShowAudios] = useState(true);
     const [showPOIs, setShowPOIs] = useState(true);
 
-    const [onMapPressMarkerCoordinates, setOnMapPressMarkerCoordinates] = useState<{latitude: number, longitude: number} | null>(null)
+    const [onMapPressMarkerCoordinates, setOnMapPressMarkerCoordinates] = useState<LatLng | null>(null)
     const [showDirectionsMenu, setShowDirectionsMenu] = useState<boolean>(false)
     const [directionsOnMapPressEvent, setDirectionsOnMapPressEvent] = useState<LatLng | null>(null)
 
     const [polylineCoords, setPolylineCoords] = useState<LatLng[]>([])
+    const [directionsMarkers, setDirectionsMarkers] = useState<{startingPoint: LatLng, endingPoint: LatLng}>({startingPoint: null, endingPoint: null})
+
+    const [showPoiList, setShowPoiList] = useState<boolean>(false)
+    const [poiListData, setPoiListData] = useState<POICardProps[]>([])
 
     useEffect(() => {
         if (initialLatitude && initialLongitude)
@@ -120,14 +128,47 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
     }
 
     function handleDirectionsButtonPress() {
-        console.log("DEBUG (rimuovere log) bottone premuto! showDirectionsMenu: ", showDirectionsMenu)
-        setShowDirectionsMenu(prev => !prev)
+        if (showDirectionsMenu) {
+            //directions button is used both as an opener and as a closer when the menu is already open
+            handleDirectionsClosePress()
+        }
+        else {
+            setShowDirectionsMenu(true)
+            //setOnMapPressMarkerCoordinates(null)
+            setDirectionsMarkers({startingPoint: null, endingPoint: null})
+            setDirectionsOnMapPressEvent(null)
+        }
+    }
+
+    function handleDirectionsClosePress() {
+        setShowDirectionsMenu(false)
+        setOnMapPressMarkerCoordinates(null)
+        setDirectionsMarkers({startingPoint: null, endingPoint: null})
+        setDirectionsOnMapPressEvent(null)
+    }
+
+    function handleMapLongPress(event: MapPressEvent) {
+        if (!onMapPressMarkerCoordinates) {
+            setOnMapPressMarkerCoordinates(event.nativeEvent.coordinate)
+        }
+        if (!showDirectionsMenu) {
+            handleDirectionsButtonPress()
+        }
+    }
+
+
+    function onPOIsFetch(POIs: POICardProps[]) {
+        setPoiListData(POIs)
+        setShowPoiList(true)
+    }
+
+    function handleClosePOIList() {
+        setShowPoiList(false)
     }
 
 
     useEffect(() => {
         console.log("DEBUG clustered map component mounted")
-
     }, [])
 
     const [points, supercluster] = useClusterer(
@@ -148,12 +189,16 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
             onRegionChangeComplete={setRegion}
             showsMyLocationButton={true}
             showsPointsOfInterest={false}
-            onLongPress={(e) =>
-                console.log(JSON.stringify(e.nativeEvent, null, 2))
+            onLongPress={(e) => {
+                    console.log(JSON.stringify(e.nativeEvent, null, 2));
+                    handleMapLongPress(e);
+                }
             }
             showsUserLocation
             onPress={onMapPress}
         >
+            
+
             {points?.map((point) => (
                 // These should be memoized components,
                 // otherwise you might see flickering
@@ -173,13 +218,31 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
                 </MemoizedMarker>
             ))}
 
-            {onMapPressMarkerCoordinates ? 
+            {!showDirectionsMenu && onMapPressMarkerCoordinates ? 
             <Marker
                 coordinate={onMapPressMarkerCoordinates}>
             </Marker> 
             : <></>}
 
-            <Polyline coordinates={polylineCoords}/>
+            {showDirectionsMenu && directionsMarkers.startingPoint ? 
+            <Marker
+                coordinate={directionsMarkers.startingPoint}
+            />
+            : <></>}
+            {showDirectionsMenu && directionsMarkers.endingPoint ? 
+            <Marker
+                coordinate={directionsMarkers.endingPoint}
+            />
+            : <></>}
+
+            <Polyline
+                coordinates={polylineCoords}
+                strokeColor="#FF0000" // Colore rosso
+                strokeWidth={5} // Larghezza della linea
+                geodesic={false} // Linea geodetica
+                lineCap="round" // Estremità arrotondate
+                lineJoin="round" // Giunzioni arrotondate
+            />
 
         </MapView>
 
@@ -206,13 +269,25 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
         {showDirectionsMenu ? 
         <View style={{ position: 'absolute', top: 0, zIndex: 1, width: '100%' }}>
             <DirectionsSelector 
-                onClose={handleDirectionsButtonPress}
+                onClose={handleDirectionsClosePress}
                 onMapPressEventCoords={directionsOnMapPressEvent}
                 onRouteCompute={setPolylineCoords}
+                onPOIsFetch={onPOIsFetch}
+                setDirectionsMarkers={setDirectionsMarkers}
+                defaultEndingPoint={onMapPressMarkerCoordinates}
             />
         </View>
         :
         <></>}
+
+
+        {showPoiList ? 
+        <POIListModal 
+            visible={showPoiList}
+            onClose={handleClosePOIList}
+            data={poiListData}
+            />
+        :<></>}
     </>
     );
 }

@@ -28,7 +28,7 @@ export function ClusterMarker({ point, supercluster }: ClusterMarkerProps) {
                         ? point.properties.point_count
                         : "10+"}
                 </Badge>
-                <Icon source="playlist-music" size={30} />
+                <Icon source="playlist-music" size={30} color="#904" />
             </View>
             <Callout>
                 <View className="w-56 flex flex-col gap-2 items-center justify-center">
@@ -72,7 +72,7 @@ function AudioMarkerCallout({ point }: MarkerProps) {
 export function AudioMarker({ point }: MarkerProps) {
     return (
         <>
-            <IconButton icon={"music"} size={30} />
+            <IconButton icon={"music"} size={30} iconColor="red" />
             <Callout>
                 <AudioMarkerCallout point={point} />
             </Callout>
@@ -94,7 +94,7 @@ function POIMarkerCallout({ point }: MarkerProps) {
 export function POIMarker({ point }: MarkerProps) {
     return (
         <>
-            <IconButton icon={"pokemon-go"} size={30} />
+            <IconButton icon={"pokemon-go"} size={30} iconColor="red" />
             <Callout>
                 <POIMarkerCallout point={point} />
             </Callout>

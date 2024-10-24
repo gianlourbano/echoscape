@@ -4,6 +4,7 @@ import { useFetch } from "@/hooks/useFetch";
 import { coordsToGeoJSONFeature, regionToBBox } from "../markers/utils";
 import useSWRMutation from "swr/mutation";
 import { getZoomLevel } from "../map/mapUtils";
+import { LatLng } from "react-native-maps";
 
 /*
 https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
@@ -52,15 +53,34 @@ export async function sendOverpassRequest(
 
 
 
-
-function pickOneSkipTwo<T>(array: T[]): T[] {
+/*
+takes in input an array
+returns a copy of the array taking only 1 elements every 4. so, a shorter array
+*/
+function pickOneSkipTwo(array) {
     return array.filter((_, index) => index % 4 === 0);
 }
 
-export function createOverpassPathQuery(path, radius = 100) {
+/*
+takes in input a path, as an array of coordinates:
+    - LatLng objects, {latitude: number, longitude: number}
+    - [lon, lat], arrays formed by a pair of numbers. in this case, the longitude goes FIRST, then the latitude
+makes the request to overpass API
+returns the list of POIs down that route
+*/
+export function createOverpassPathQuery(path: number[][] | LatLng[], radius = 100) {
     let query = '[out:json];(';
 
-    const pathCopy = path.length > 10 ? pickOneSkipTwo(path) : path
+    const pathCopy = (path.length > 10 ? pickOneSkipTwo(path) : path)
+                    .map((element: [number, number] | LatLng) => {
+                        //checks if the array is formed by
+                        if (Array.isArray(element)) {
+                            return element as [number, number];
+                        } else {
+                            const latLng = element as LatLng;
+                            return [latLng.longitude, latLng.latitude];
+                        }
+                    })
     
     pathCopy.forEach(([lon, lat]) => {
         query += `
@@ -89,7 +109,7 @@ export async function fetchOverpass(query) {
         });
 
         const data = await response.json();
-        console.log(data); // Stampa i dati ottenuti dalla richiesta
+        //console.log(data); // Stampa i dati ottenuti dalla richiesta
         return data;
     } catch (error) {
         console.error("Errore nella richiesta Overpass:", error);
@@ -106,6 +126,30 @@ const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.05) => {
 
     return latDiff > threshold || lonDiff > threshold;
 };
+
+export async function getCoordinatesName(coords: LatLng | null): Promise<string> {
+    if (!coords) return ""
+    const latitude = coords.latitude
+    const longitude = coords.longitude
+    try {
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
+        console.log("DEBUG request.ts getCoordinatesName response: ", response)
+        const data = await response.json();
+        console.log("DEBUG request.ts getCoordinatesName data: ", data)
+        if (data && data.address && data.address.road) {
+            return data.address.road;
+        } else {
+            return `${latitude}, ${longitude}`;
+        }
+    } catch (error) {
+        console.error('DirectionsSelector: Error fetching coordinates name from (',latitude, ' ', longitude,'):', error);
+        return `${latitude}, ${longitude}`;
+    }
+};
+
+
+
+
 
 export const usePOIs = (region: Region) => {
     const oldBBox = useRef(null);

@@ -1,8 +1,11 @@
 import { getRouteNodes, matchPOIsToNodes } from '@/utils/map/routes';
-import { useEffect, useState } from 'react';
+import { createOverpassPathQuery, fetchOverpass, getCoordinatesName } from '@/utils/overpass/request';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { LatLng, MapPressEvent } from 'react-native-maps';
+import { LatLng } from 'react-native-maps';
 import { IconButton, Button } from 'react-native-paper';
+import { POICardProps } from '../MarkerModals/POICard';
+import { isPOIRecommended } from '@/utils/overpass/POIsAudios_Associations';
 
 const { height } = Dimensions.get('window');
 
@@ -18,15 +21,17 @@ interface DirectionsSelectorProps {
 interface DirectionsSelectorProps {
     onClose: () => void;
     onMapPressEventCoords: LatLng | null;
-    onRouteCompute: (coords: LatLng[]) => void;
+    onRouteCompute: (coords: LatLng[]) => void;  //receives route nodes
+    onPOIsFetch: (POIs: POICardProps[]) => void;  //receives already formatted data for POI cards
+    setDirectionsMarkers?: Dispatch<SetStateAction<({startingPoint: LatLng | null, endingPoint: LatLng | null})>>    //setstate function from useState to show start and end point on the map
+    defaultEndingPoint?: LatLng | null; //if given and not null, the directions menu will open using this point as the starting point
 }
 
 const DirectionsSelector = (
-    { onClose, onMapPressEventCoords, onRouteCompute }: DirectionsSelectorProps) => {    
+    { onClose, onMapPressEventCoords, onRouteCompute, onPOIsFetch, setDirectionsMarkers, defaultEndingPoint }: DirectionsSelectorProps) => {    
     
     const [componentHeight, setComponentHeight] = useState<number>(0);
 
-    // Stati per controllare il testo nei bottoni
     const [button1Text, setButton1Text] = useState<string>('Start');
     const [button2Text, setButton2Text] = useState<string>('Destination');
 
@@ -37,9 +42,25 @@ const DirectionsSelector = (
     const [endPoint, setEndPoint] = useState<LatLng | null>(null)
 
     useEffect(() => {
+        /*
+        set component height to occupy only the top of the page
+        */
         const { height } = Dimensions.get('window');
         const componentHeight = height / 5;
         setComponentHeight(componentHeight);
+
+        /*
+        if a starting point was selected before opening the menu: 
+            - set it as the starting point
+            - toggle end point selection
+        */
+        (async () => {
+            if (defaultEndingPoint) {
+                handleEndPointChange(defaultEndingPoint) 
+                setButton2Text(await getCoordinatesName(defaultEndingPoint))
+            }
+            console.log(`[directionsSelector] default ending point ${defaultEndingPoint ? `selected: latitude: ${defaultEndingPoint.latitude} longitude: ${defaultEndingPoint.longitude} ` : "not selected"}`)
+        })()
     }, []);
 
     /*
@@ -48,13 +69,14 @@ const DirectionsSelector = (
     else, the event will be ignored
     */
     useEffect(() => {
-        if (selectingStartPoint) setStartPoint(onMapPressEventCoords);
-        if (selectingEndPoint) setEndPoint(onMapPressEventCoords);
+        if (selectingStartPoint) handleStartPointChange(onMapPressEventCoords);
+        if (selectingEndPoint) handleEndPointChange(onMapPressEventCoords);
         /*
         fetch name of the points, to put names instead of coordinates in the buttons
         */
-       (async () => {
-            console.log("[directionsSelector]coords: ", onMapPressEventCoords, " name: ", await getCoordinatesName(onMapPressEventCoords))
+       (async () => {            
+            //fetch name of selected points
+            console.log("[directionsSelector]map pressed on coords: ", onMapPressEventCoords, " name: ", await getCoordinatesName(onMapPressEventCoords))
             if (selectingStartPoint) setButton1Text(await getCoordinatesName(onMapPressEventCoords))
             if (selectingEndPoint)   setButton2Text(await getCoordinatesName(onMapPressEventCoords))
         })()
@@ -64,25 +86,19 @@ const DirectionsSelector = (
     }, [onMapPressEventCoords])
 
 
-    async function getCoordinatesName(coords: LatLng | null): Promise<string> {
-        if (!coords) return ""
-        const latitude = coords.latitude
-        const longitude = coords.longitude
-        try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-            const data = await response.json();
-            if (data && data.address && data.address.road) {
-                return data.address.road;
-            } else {
-                return `${latitude}, ${longitude}`;
-            }
-        } catch (error) {
-            console.error('DirectionsSelector: Error fetching coordinates name from (',latitude, ' ', longitude,'):', error);
-            return `${latitude}, ${longitude}`;
-        }
-    };
 
-    
+
+
+    function handleStartPointChange(newStartPoint: LatLng) {
+        setStartPoint(newStartPoint)
+        setDirectionsMarkers(prev => ({ ...prev, startingPoint: newStartPoint }))
+    }
+
+    function handleEndPointChange(newEndPoint: LatLng) {
+        setEndPoint(newEndPoint)
+        setDirectionsMarkers(prev => ({...prev, endingPoint: newEndPoint}))
+    }
+
     function handleStartButtonPress() {
         console.log("start button pressed!")
         if (selectingEndPoint && !selectingStartPoint) setSelectingEndPoint(false)
@@ -96,10 +112,35 @@ const DirectionsSelector = (
     }
 
     async function handleGetDirectionsButtonPress() {
+        if (!startPoint || !endPoint) return;
+
         const route = await getRouteNodes(startPoint.latitude, startPoint.longitude, endPoint.latitude, endPoint.longitude)
         onRouteCompute(route)
+
+        const overpassResponse = await fetchOverpass(createOverpassPathQuery(route))
+        console.log("[directionsSelector DEBUG] POIs in route: ", (overpassResponse).elements.map(element => element.tags.name), "addresses: ", (overpassResponse).elements.map(element => element))
+        //warning: long log - console.log("[directionsSelector] route computed (should be displayed as a polyline on the map: ", route)
+
+        //cast to POIcardProps type
+        const POICardsInfo = await Promise.all(overpassResponse.elements.map(async (element) => {
+            const poiRecommendation = await isPOIRecommended({latitude: element.lat, longitude: element.lon})
+            const cardInfo: POICardProps = {
+                name: element.tags.name,
+                address: element.tags["addr:street"],
+                coordinates: {latitude: element.lat, longitude: element.lon},
+                recommended: poiRecommendation,
+                link: element.tags.wikipedia ? `https://it.wikipedia.org/wiki/${element.tags.wikipedia}` : null,
+                additionalInfo: [
+                    {label: "recommended", value: poiRecommendation ? "yes" : "no"}
+                ]
+            };
+
+            return cardInfo
+        }))
+        onPOIsFetch(POICardsInfo)
+
     }
-    
+
     const styles = StyleSheet.create({
         container: {
             flexDirection: 'row',
@@ -147,12 +188,12 @@ const DirectionsSelector = (
 
     return (
         <View style={styles.container}>
-            {/* Croce per chiudere */}
+            {/* close button */}
             <View style={styles.leftColumn}>
                 <IconButton icon="close" size={24} onPress={onClose} />
             </View>
 
-            {/* Bottoni con icone */}
+            {/* map buttons */}
             <View style={styles.centerColumn}>
                 <View style={styles.buttonRow}>
                     <IconButton icon="ray-start-arrow" size={24} />
@@ -176,10 +217,14 @@ const DirectionsSelector = (
                 </View>
             </View>
 
-            {/* Bottone sulla destra */}
+            {/* route computation button */}
             <View style={styles.rightColumn}>
-                <Button mode="text" onPress={handleGetDirectionsButtonPress}>
-                    <IconButton icon="map-marker-right-outline"/>
+                <Button 
+                    mode="text" 
+                    onPress={handleGetDirectionsButtonPress}
+                    disabled={!startPoint || !endPoint}
+                >
+                    <IconButton icon="map-marker-right-outline" iconColor={!startPoint || !endPoint ? 'grey' : 'black'}/>
                 </Button>
             </View>
         </View>
