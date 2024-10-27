@@ -7,15 +7,10 @@ import { useEffect } from "react";
 export default function MapPage() {
     const {latitude, longitude} = useLocalSearchParams<{longitude?: string, latitude?: string}>();
 
-    useEffect(() => {
-        console.log("DEBUG map page component mounted")
-
-    }, [])
-
     return (
         <View style={styles.container}>
             <Link href="/modal">Modal</Link>
-            <ClusteredMap initialLatitude={latitude} initialLongitude={longitude}/>
+            <ClusteredMap latitude={Number(latitude)} longitude={Number(longitude)}/>
         </View>
     );
 }

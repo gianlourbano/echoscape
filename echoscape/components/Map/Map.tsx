@@ -204,7 +204,7 @@ const MapComponent = ({ initialLatitude, initialLongitude }) => {
         //     // });
         //     // fetchRoute(latitude, longitude, 44.505376, 11.343215); // Example coordinates for point B
         // });
-
+ 
         (async () => {
             const response = await withAuthFetch(
                 `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all`

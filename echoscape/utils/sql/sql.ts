@@ -13,6 +13,14 @@ export interface AudioData {
     backendData: string | null;
 }
 
+export interface BackendAudioData {
+    bpm: number;
+    danceability: number;
+    loudness: number;
+    mood: Record<string, number>;
+    genre: Record<string, number>;
+    instrument: Record<string, number>;
+}
 
 
 export const getAudioData = async (): Promise<AudioData[]> => {
@@ -74,3 +82,15 @@ export const deleteAllAudioData = async (): Promise<void> => {
     }
     await db.runAsync(`DELETE FROM audios`);
 };
+
+export const useAudioDB = () => {
+    return {
+        getAudioData,
+        getToBeUploadedAudioData,
+        getAlreadyUploadedAudioData,
+        uploadAudioData,
+        addAudioData,
+        deleteAudioData,
+        deleteAllAudioData,
+    };
+}

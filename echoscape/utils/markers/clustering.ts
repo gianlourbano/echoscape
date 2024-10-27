@@ -15,6 +15,7 @@ import type Supercluster from './types.ts';
 import type { MapDimensions, Region } from './types.ts';
 import SuperclusterClass from './supercluster';
 import type * as GeoJSON from 'geojson';
+import { getZoomLevel } from '../map/mapUtils';
 
 export function useClusterer<
   P extends GeoJSON.GeoJsonProperties = Supercluster.AnyProps,
@@ -41,7 +42,9 @@ export function useClusterer<
   );
 
   const points = useMemo(
-    () => supercluster.getClustersFromRegion(region, mapDimensions),
+    () => {
+      return supercluster.getClustersFromRegion(region, mapDimensions);
+    },
     [
       supercluster,
       region.latitude,

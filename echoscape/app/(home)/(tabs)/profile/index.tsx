@@ -7,15 +7,26 @@ import {
     RefreshControlComponent,
     ScrollView,
     View,
+    useWindowDimensions,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
-import { Button, Surface, Text, Avatar, IconButton, Icon } from "react-native-paper";
+import {
+    Button,
+    Surface,
+    Text,
+    Avatar,
+    IconButton,
+    Icon,
+} from "react-native-paper";
 import { Image, SafeAreaView } from "moti";
 import { Audio } from "@/components/Audio/Audio";
-import { Link, router } from "expo-router";
+import { Link, router, Tabs } from "expo-router";
 import { UserData } from "@/utils/auth/types";
 import * as ImagePicker from "expo-image-picker";
 import { useFetch } from "@/hooks/useFetch";
+
+import { TabView, SceneMap } from "react-native-tab-view";
+import { Stats } from "@/components/Profile/Stats";
 
 const funnyTextsLmao = [
     {
@@ -35,6 +46,13 @@ const funnyTextsLmao = [
         subtitle: "Upload it!",
     },
 ];
+
+interface BackendAudioItem {
+    id: number;
+    longitude: number;
+    latitude: number;
+    hidden: boolean;
+}
 
 const UserAvatar = ({ user }: { user: UserData }) => {
     const [image, setImage] = useState<string | null>(null);
@@ -65,7 +83,15 @@ const UserAvatar = ({ user }: { user: UserData }) => {
     );
 };
 
-const UploadedAudio = ({ audio }: { audio: any }) => {
+const UploadedAudio = ({
+    audio,
+    mutate,
+}: {
+    audio: BackendAudioItem;
+    mutate: any;
+}) => {
+    const { withAuthFetch } = useAuth();
+
     return (
         <View
             key={audio.id}
@@ -77,17 +103,69 @@ const UploadedAudio = ({ audio }: { audio: any }) => {
                 </Link>
             </View>
             <View className="flex flex-row items-center justify-center">
-                <Link href={`/?latitude=${audio.latitude}&longitude=${audio.longitude}`} asChild>
-                    <IconButton icon="map-marker-radius"/>
+                <Link
+                    href={`/?latitude=${audio.latitude}&longitude=${audio.longitude}`}
+                    asChild
+                >
+                    <IconButton icon="map-marker-radius" />
                 </Link>
-                <IconButton icon={audio.hidden ? "closed-eye" : "eye"} onPress={() => {}} />
-                <IconButton icon="delete" onPress={() => {}} />
+                <IconButton
+                    icon={audio.hidden ? "eye-off" : "eye"}
+                    onPress={() => {
+                        withAuthFetch(
+                            `${
+                                process.env.EXPO_PUBLIC_BACKEND_BASE_URL
+                            }/audio/my/${audio.id}/${
+                                audio.hidden ? "show" : "hide"
+                            }`
+                        ).then(() => mutate());
+                    }}
+                />
+                <IconButton
+                    icon="delete"
+                    onPress={() => {
+                        withAuthFetch(
+                            `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`,
+                            {
+                                method: "DELETE",
+                            }
+                        )
+                            .then((res) => res.json())
+                            .then((res) => {
+                                console.log(res);
+                                mutate();
+                            });
+                    }}
+                />
             </View>
         </View>
     );
 };
 
-const ProfilePage = () => {
+const BackendAudioView = () => {
+    const { data, isLoading, error, mutate } = useFetch(`/audio/my`, {
+        cache: false,
+    });
+
+    return (
+        <ScrollView className="p-2">
+            <RefreshControl refreshing={isLoading} onRefresh={() => mutate()} />
+            <View className="flex-1 p-2 flex flex-col gap-4">
+                {data?.map((audio: BackendAudioItem, index: number) => {
+                    return (
+                        <UploadedAudio
+                            key={audio.id + index}
+                            audio={audio}
+                            mutate={mutate}
+                        />
+                    );
+                })}
+            </View>
+        </ScrollView>
+    );
+};
+
+const LocalAudioView = () => {
     const [recordings, setRecordings] = useState<string[]>([]);
     const [refreshing, setRefreshing] = useState(false);
 
@@ -103,38 +181,16 @@ const ProfilePage = () => {
         setRefreshing(false);
     }
 
-    const { user, dispatch } = useAuth();
-    const { data, isLoading, error } = useFetch(`/audio/my`);
-
     useEffect(() => {
         loadRecordings();
     }, []);
 
     return (
-        <SafeAreaView className="w-full bg-zinc-700 h-full">
-            <View className="p-4 bg-zinc-700 flex flex-row items-center gap-4">
-                <UserAvatar user={user} />
-                <Link href="/debug" asChild>
-                <Text
-                    variant="headlineMedium"
-                    className="flex-1"
-                    >
-                    {user?.username}
-                </Text>
-                    </Link>
-                <Button onPress={() => dispatch("logout")}>Logout</Button>
-            </View>
-            <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
-            <View className="p-4 flex justify-center gap-4">
-                <Text variant="titleLarge">Uploaded Audios</Text>
-                
-            </View>
+        <View>
             <ScrollView>
                 <RefreshControl
                     refreshing={refreshing}
-                    onRefresh={async () => {
-                        loadRecordings();
-                    }}
+                    onRefresh={() => loadRecordings()}
                 />
 
                 {recordings.length === 0 ? (
@@ -171,6 +227,66 @@ const ProfilePage = () => {
                         </View>
                     </>
                 )}
+            </ScrollView>
+        </View>
+    );
+};
+
+const renderScene = SceneMap({
+    backend: BackendAudioView,
+    local: LocalAudioView,
+});
+
+const ProfilePage = () => {
+    const { user, dispatch } = useAuth();
+
+    const layout = useWindowDimensions();
+
+    const [index, setIndex] = useState(0);
+    const [routes] = useState([
+        { key: "backend", title: "Backend" },
+        { key: "local", title: "Local" },
+    ]);
+
+    return (
+        <SafeAreaView className="w-full bg-zinc-700 h-full">
+            <View className="p-4 bg-zinc-700 flex flex-row items-center gap-4">
+                <UserAvatar user={user} />
+                <Link href="/debug" asChild>
+                    <Text variant="headlineMedium" className="flex-1">
+                        {user?.username}
+                    </Text>
+                </Link>
+                <Button onPress={() => dispatch("logout")}>Logout</Button>
+            </View>
+            <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
+            <ScrollView>
+                <Stats />
+                <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
+                <View className="p-4 flex justify-center gap-4">
+                    <Text variant="titleLarge">Uploaded Audios</Text>
+                </View>
+
+                <TabView
+                    navigationState={{ index, routes }}
+                    renderScene={renderScene}
+                    onIndexChange={setIndex}
+                    initialLayout={{ width: layout.width }}
+                    renderTabBar={(props) => (
+                        <View className="flex flex-row w-full justify-evenly">
+                            {props.navigationState.routes.map((route, i) => (
+                                <Button
+                                    key={`${route.key}-${i}`}
+                                    onPress={() => {
+                                        setIndex(i);
+                                    }}
+                                >
+                                    {route.title}
+                                </Button>
+                            ))}
+                        </View>
+                    )}
+                />
             </ScrollView>
         </SafeAreaView>
     );

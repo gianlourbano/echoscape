@@ -24,7 +24,7 @@ const MemoizedMarker = memo(
     }
 );
 
-export default function ClusteredMap({ initialLatitude, initialLongitude }) {
+export default function ClusteredMap({ latitude: initialLatitude, longitude: initialLongitude } : LatLng) {
     const [region, setRegion] = useState({
         latitude: 44.485377,
         longitude: 11.339487,
@@ -46,6 +46,7 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
     const [poiListData, setPoiListData] = useState<POICardProps[]>([])
 
     useEffect(() => {
+        console.log("DEBUG ClusteredMap component mounted with in")
         if (initialLatitude && initialLongitude)
             setRegion({
                 latitude: initialLatitude,
@@ -105,7 +106,7 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
 
             return [...data, ...pois, ...memes];
         },
-        [data, POIs]
+        [data, POIs, region]
     );
 
     function onMapPress(event: MapPressEvent) {
@@ -165,11 +166,6 @@ export default function ClusteredMap({ initialLatitude, initialLongitude }) {
     function handleClosePOIList() {
         setShowPoiList(false)
     }
-
-
-    useEffect(() => {
-        console.log("DEBUG clustered map component mounted")
-    }, [])
 
     const [points, supercluster] = useClusterer(
         applyTransform(showAudios ? data : [], showPOIs ? POIs : []),

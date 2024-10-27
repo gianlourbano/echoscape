@@ -8,7 +8,9 @@ import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams } from "expo-router";
 import { Audio as AudioComponent } from "@/components/Audio/Audio";
 import { useNetInfo } from "@react-native-community/netinfo";
-import { addAudioData, getAudioData, uploadAudioData } from "@/utils/sql/sql";
+import { useAudioDB } from "@/utils/sql/sql";
+import { useAuth } from "@/utils/auth/AuthProvider";
+import { useLocation } from "@/utils/location/location";
 
 type AudioItem = {
     id: string;
@@ -31,9 +33,14 @@ export default function Page({}) {
 
     const netInfo = useNetInfo();
 
+    const { withAuthFetch } = useAuth();
+    const loc = useLocation();
+
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [audioItems, setAudioItems] = useState<string[]>([]);
+
+    const { addAudioData, getAudioData, uploadAudioData } = useAudioDB();
 
     async function loadRecordings() {
         const dir = await getUserTmpUri();
@@ -90,7 +97,7 @@ export default function Page({}) {
             };
 
             const dir = await getUserTmpUri();
-            const filename = `recording-${Date.now()}.wav`;
+            const filename = `recording-${Date.now()}.m4a`;
             const to = `${dir}/${filename}`;
 
             await FileSystem.moveAsync({
@@ -108,12 +115,29 @@ export default function Page({}) {
 
             // fetch... 
 
+            
+
+            const form = new FormData();
+            // @ts-ignore
+            form.append('file', {
+                uri: uri,
+                name: 'audio.m4a',
+                type: 'audio/*'
+            });
+
+            const response = await withAuthFetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/upload?longitude=${loc.coords.longitude}&latitude=${loc.coords.latitude}`, {
+                method: "POST",
+                body: form
+            })
+
+            const data = await response.json();
+
             await addAudioData(uri).then(async () => {
                 const r = await getAudioData();
                 console.log(r);
             });
 
-            const backendData = {}
+            const backendData = data;
         
             await uploadAudioData(uri, JSON.stringify(backendData)).then(async () => {
                 const r = await getAudioData();
@@ -126,6 +150,8 @@ export default function Page({}) {
             });
 
             console.log("[AUDIO UP] Audio uploaded!");
+
+            
 
             loadRecordings();
 
@@ -175,8 +201,10 @@ export default function Page({}) {
                                     />
                                     
                                     <View className="flex flex-row w-full gap-2 justify-evenly">
-                                        <Button onPress={() => {}}>
-                                            Delete
+                                        <Button onPress={async () => {
+                                            
+                                        }}>
+                                            Transcribe
                                         </Button>
                                         <Button
                                             onPress={() =>
