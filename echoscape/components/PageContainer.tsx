@@ -4,7 +4,7 @@ export default function PageContainer({
     children,
     className,
 }: {
-    children: any;
+    children?: any;
     className?: string;
 }) {
     return (
