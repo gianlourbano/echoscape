@@ -8,7 +8,7 @@ import * as FileSystem from "expo-file-system";
 import { useLocalSearchParams } from "expo-router";
 import { Audio as AudioComponent } from "@/components/Audio/Audio";
 import { useNetInfo } from "@react-native-community/netinfo";
-import { useAudioDB } from "@/utils/sql/sql";
+import { addAudioData, getAudioData, uploadAudioData } from "@/utils/sql/sql";
 
 type AudioItem = {
     id: string;
@@ -21,21 +21,6 @@ export type AudioPageProps = {
     lng?: string;
 };
 
-import { View as MotiView, AnimatePresence } from "moti";
-
-import * as FileSystem from "expo-file-system";
-import { getUserBaseURI, getUserTmpUri } from "@/utils/fs/fs";
-
-import { usePlaySound, useRecordSound } from "@/hooks/useSound";
-
-import { Audio, AudioProps } from "@/components/Audio/Audio";
-import { useSQLiteContext } from "expo-sqlite";
-import { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData, AudioData } from "@/utils/sql/sql";
-
-import { sendOverpassRequest } from "@/utils/overpass/request";
-import PageContainer from "@/components/PageContainer";
-
-import { uploadAudio } from "@/utils/tasks/audioUpload";
 
 export default function Page({}) {
     const { lat, lng } = useLocalSearchParams<AudioPageProps>();
@@ -88,7 +73,6 @@ export default function Page({}) {
         }
     }
 
-    const { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData } = useAudioDB();
 
 
     async function stopRecording() {
