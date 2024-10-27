@@ -12,7 +12,7 @@ import { AppState } from "react-native";
 import { setNotificationHandler } from "expo-notifications";
 import { sendNotification, setNotificationsHandler } from "@/utils/notifications/manageNotifications";
 import NetInfo from '@react-native-community/netinfo';
-import { AudioData, useAudioDB } from "@/utils/sql/sql";
+import { AudioData, getToBeUploadedAudioData } from "@/utils/sql/sql";
 import { uploadAudio } from "@/utils/tasks/audioUpload";
 import { simpleDebounce } from "@/utils/utils";
 
@@ -43,7 +43,6 @@ export default function RootLayout() {
         upload audios when eventually connection is available
         */
         NetInfo.addEventListener(simpleDebounce( async state => {
-            const { getToBeUploadedAudioData } = useAudioDB();
             
             console.log(`[network listener] state.type: ${state.type}, state.isConnected: ${state.isConnected} `)
             

@@ -1,5 +1,5 @@
-import { useNetInfo } from "@react-native-community/netinfo";
-import { useAudioDB } from "../sql/sql";
+import NetInfo from '@react-native-community/netinfo';
+import { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData } from "../sql/sql";
 import * as FileSystem from "expo-file-system";
 
 
@@ -11,9 +11,8 @@ loadRecordings is a function that can be passed when uploadAudio is used in a re
 and can be left undefined when used elsewhere
 */
 export const uploadAudio = async (uri: string, loadRecordings?: () => void) => {
-    const { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData } = useAudioDB();
-    const netInfo = useNetInfo();
-    if (netInfo.isConnected && netInfo.isInternetReachable) {
+    const netinfodata = await NetInfo.fetch()
+    if (netinfodata.isConnected && netinfodata.isInternetReachable) {
         console.log("[AUDIO UP] Audio can be uploaded!");
 
         // fetch... 

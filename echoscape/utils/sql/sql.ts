@@ -1,5 +1,8 @@
-import { useSQLiteContext } from "expo-sqlite";
+// utils/audioDB.ts
+import * as SQLite from 'expo-sqlite';
 import { ss_get } from "../secureStore/SStore";
+
+const db = SQLite.openDatabaseSync("audios.db");
 
 
 export interface AudioData {
@@ -10,57 +13,64 @@ export interface AudioData {
     backendData: string | null;
 }
 
-export function useAudioDB() {
-    const db = useSQLiteContext();
 
-    const getAudioData = async () => {
-        const username = await ss_get("username");
-        const result = await db.getAllAsync(
-            `SELECT * FROM audios WHERE user = ?`,
-            [username]
-        );
-        return result as AudioData[];
-    };
 
-    const getToBeUploadedAudioData = async () => {
-        const username = await ss_get("username");
-
-        const result = await db.getAllAsync(
-            `SELECT * FROM audios WHERE user = ? AND uploaded = 0`,
-            [username]
-        );
-        return result as AudioData[];
-    };
-
-    const uploadAudioData = async (uri: string, backendData: string) => {
-        const newUri = uri.replace("/tmp", "");
-        await db.runAsync(`UPDATE audios SET uploaded = 1, backendData = ?, uri = ? WHERE uri = ?`, [backendData, newUri, uri]);
-        
-    };
-
-    const addAudioData = async (uri: string) => {
-        const username = await ss_get("username");
-
-        await db.runAsync(
-            `INSERT INTO audios (user, uri, uploaded) VALUES (?, ?, 0)`,
-            [username, uri]
-        );
-    };
-
-    const deleteAudioData = async (uri: string) => {
-        await db.runAsync(`DELETE FROM audios WHERE uri = ?`, [uri]);
+export const getAudioData = async (): Promise<AudioData[]> => {
+    if (!db) {
+        throw new Error("Database not initialized");
     }
+    const username = await ss_get("username");
+    return db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ?`, [username]);
+};
 
-    const deleteAllAudioData = async () => {
-        await db.runAsync(`DELETE FROM audios`);
+export const getToBeUploadedAudioData = async (): Promise<AudioData[]> => {
+    if (!db) {
+        throw new Error("Database not initialized");
     }
+    const username = await ss_get("username");
+    return db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ? AND uploaded = 0`, [username]);
+};
 
-    return {
-        getAudioData,
-        getToBeUploadedAudioData,
-        uploadAudioData,
-        addAudioData,
-        deleteAllAudioData,
-        deleteAudioData,
-    };
-}
+export const getAlreadyUploadedAudioData = async (): Promise<AudioData[]> => {
+    if (!db) {
+        throw new Error("Database not initialized");
+    }
+    try {
+        const username = await ss_get("username");
+        console.log(await db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ? AND uploaded = 1`, [username]))
+        return await db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ? AND uploaded = 1`, [username]);
+    } catch (error) {
+        console.error("Error fetching already uploaded audio data:", error);
+        return [];
+    }
+};
+
+export const uploadAudioData = async (uri: string, backendData: string): Promise<void> => {
+    if (!db) {
+        throw new Error("Database not initialized");
+    }
+    const newUri = uri.replace("/tmp", "");
+    await db.runAsync(`UPDATE audios SET uploaded = 1, backendData = ?, uri = ? WHERE uri = ?`, [backendData, newUri, uri]);
+};
+
+export const addAudioData = async (uri: string): Promise<void> => {
+    if (!db) {
+        throw new Error("Database not initialized");
+    }
+    const username = await ss_get("username");
+    await db.runAsync(`INSERT INTO audios (user, uri, uploaded) VALUES (?, ?, 0)`, [username, uri]);
+};
+
+export const deleteAudioData = async (uri: string): Promise<void> => {
+    if (!db) {
+        throw new Error("Database not initialized");
+    }
+    await db.runAsync(`DELETE FROM audios WHERE uri = ?`, [uri]);
+};
+
+export const deleteAllAudioData = async (): Promise<void> => {
+    if (!db) {
+        throw new Error("Database not initialized");
+    }
+    await db.runAsync(`DELETE FROM audios`);
+};

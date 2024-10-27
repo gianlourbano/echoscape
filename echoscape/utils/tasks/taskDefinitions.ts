@@ -2,7 +2,7 @@ import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
 import NetInfo from '@react-native-community/netinfo';
 import { sendNotification } from '../notifications/manageNotifications';
-import { AudioData, useAudioDB } from '../sql/sql';
+import { AudioData, getToBeUploadedAudioData } from '../sql/sql';
 import { uploadAudio } from './audioUpload';
 
 
@@ -59,7 +59,6 @@ export async function unregisterTestTask() {
 export async function defineNetworkCheckTask() {   
     TaskManager.defineTask(NETWORK_CHECK_TASK, async () => {
         try {
-            const { getToBeUploadedAudioData } = useAudioDB();
             const toBeUploadedAudios: AudioData[] = await getToBeUploadedAudioData()
             const networkState = await NetInfo.fetch();
             if (networkState.isConnected && 

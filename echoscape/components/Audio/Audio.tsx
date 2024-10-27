@@ -5,7 +5,7 @@ import { IconButton } from "react-native-paper";
 import { useState, useEffect, useCallback } from "react";
 import { usePlaySound } from "@/hooks/useSound";
 import * as FileSystem from "expo-file-system";
-import { useAudioDB } from "@/utils/sql/sql";
+import { deleteAudioData } from "@/utils/sql/sql";
 
 const months = [
     "January",
@@ -45,7 +45,6 @@ export const Audio = ({ index, name, refresh }: AudioProps) => {
 
     const [isPlaying, setIsPlaying] = useState(false);
 
-    const {deleteAudioData} = useAudioDB();
 
     const getProgress = useCallback((status: AVPlaybackStatus) => {
         if (status.isLoaded) {

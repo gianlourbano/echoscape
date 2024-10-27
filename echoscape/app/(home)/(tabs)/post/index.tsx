@@ -12,7 +12,7 @@ import { usePlaySound, useRecordSound } from "@/hooks/useSound";
 
 import { Audio, AudioProps } from "@/components/Audio/Audio";
 import { useSQLiteContext } from "expo-sqlite";
-import { useAudioDB, AudioData } from "@/utils/sql/sql";
+import { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData, AudioData } from "@/utils/sql/sql";
 
 import { sendOverpassRequest } from "@/utils/overpass/request";
 import PageContainer from "@/components/PageContainer";
@@ -23,7 +23,6 @@ export default function Page() {
     const [recordings, setRecordings] = useState<string[]>([]);
 
     const { startRecording, stopRecording } = useRecordSound();
-    const { addAudioData, uploadAudioData, getAudioData, deleteAllAudioData } = useAudioDB();
 
     const [isRecording, setIsRecording] = useState(false); //used for conditionalButton
 

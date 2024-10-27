@@ -10,7 +10,7 @@ import MapView, { UrlTile } from "react-native-maps";
 import { Surface, Button, Text, Card } from "react-native-paper";
 import * as TaskManager from 'expo-task-manager';
 import { sendNotification } from "@/utils/notifications/manageNotifications";
-import { AudioData, useAudioDB } from "@/utils/sql/sql";
+import { AudioData, getToBeUploadedAudioData, getAlreadyUploadedAudioData } from "@/utils/sql/sql";
 import { simpleDebounce } from "@/utils/utils";
 import Collapsible from 'react-native-collapsible';
 import { createOverpassPathQuery, fetchOverpass } from "@/utils/overpass/request";
@@ -958,7 +958,6 @@ const styles = StyleSheet.create({
 
 
 const TaskManagerDebug = () => {
-    const { getToBeUploadedAudioData } = useAudioDB();
     async function printToBeUploadedAudios() {
         const toBeUploadedAudios: AudioData[] = await getToBeUploadedAudioData()
         console.log("toBeUploadedAudios: ", toBeUploadedAudios)
@@ -985,6 +984,11 @@ const TaskManagerDebug = () => {
                 onPress={printToBeUploadedAudios}
             >
                 print audios not yet uploaded
+            </Button>
+            <Button
+                onPress={getAlreadyUploadedAudioData}
+            >
+                print audios already uploaded
             </Button>
             <Button
                 onPress={debounceTest}
