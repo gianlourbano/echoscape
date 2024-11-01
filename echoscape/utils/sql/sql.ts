@@ -1,6 +1,7 @@
 // utils/audioDB.ts
 import * as SQLite from 'expo-sqlite';
 import { ss_get } from "../secureStore/SStore";
+import * as FileSystem from "expo-file-system"
 
 const db = SQLite.openDatabaseSync("audios.db");
 
@@ -45,7 +46,6 @@ export const getAlreadyUploadedAudioData = async (): Promise<AudioData[]> => {
     }
     try {
         const username = await ss_get("username");
-        console.log(await db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ? AND uploaded = 1`, [username]))
         return await db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ? AND uploaded = 1`, [username]);
     } catch (error) {
         console.error("Error fetching already uploaded audio data:", error);

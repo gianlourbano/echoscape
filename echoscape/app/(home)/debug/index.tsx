@@ -963,6 +963,11 @@ const TaskManagerDebug = () => {
         console.log("toBeUploadedAudios: ", toBeUploadedAudios)
     }
 
+    async function printAlreadyUploadedAudios() {
+      const alreadyUploadedAudios: AudioData[] = await getAlreadyUploadedAudioData()
+      console.log("alreadyUploadedAudios: ", alreadyUploadedAudios)
+  }
+
     const debounceTest = simpleDebounce(() => {
         console.log("funzione debounce test eseguita");
     }, 3000);
@@ -986,7 +991,7 @@ const TaskManagerDebug = () => {
                 print audios not yet uploaded
             </Button>
             <Button
-                onPress={getAlreadyUploadedAudioData}
+                onPress={printAlreadyUploadedAudios}
             >
                 print audios already uploaded
             </Button>

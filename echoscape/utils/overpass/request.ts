@@ -116,15 +116,72 @@ export async function fetchOverpass(query) {
     }
 }
 
-const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.05) => {
-    if (!prevBBox) return true;
+/*
+given two bounding boxes, returns the overlap index
+the overlap index represents how much two bounding boxes overlap
+it ranges between 0 and 1:
+    - 0 for boxes completely separated
+    - 1 for total overlap
+*/
+const calculateOverlapIndex = (bbox1: BBox, bbox2: BBox): number => {
+    const [left1, bottom1, right1, top1] = bbox1;
+    const [left2, bottom2, right2, top2] = bbox2;
 
+    // no overlap: return 0
+    if (left1 >= right2 || left2 >= right1) {
+        return 0
+    }
+    if (bottom1 >= top2 || bottom2 >= top1) {
+        return 0
+    }
+
+    // intersection borders
+    const interLeft = Math.max(
+        Math.min(right1, left2),
+        Math.min(left1, right2)
+    )
+    const interRight = Math.min(
+        Math.max(right1, left2),
+        Math.max(left1, right2)
+    );
+    const interBottom = Math.max(
+        Math.min(top1, bottom2),
+        Math.min(bottom1, top2)
+    );
+    const interTop = Math.min(
+        Math.max(top1, bottom2),
+        Math.max(bottom1, top2)
+    );
+
+    // intersection area
+    const interWidth = Math.abs(interRight - interLeft);
+    const interHeight = Math.abs(interTop - interBottom);
+    const interArea = interWidth * interHeight;
+
+    // union area
+    const area1 = (right1 - left1) * (top1 - bottom1);
+    const area2 = (right2 - left2) * (top2 - bottom2);
+    const unionArea = area1 + area2 - interArea;
+
+    return unionArea === 0 ? 0 : interArea / unionArea;
+  };
+  
+
+const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.5) => {
+    if (!prevBBox) return true;
+/*
     const latDiff =
-        Math.abs(prevBBox.north - newBBox.north) / Math.abs(prevBBox.north);
+        Math.abs(prevBBox[3] - newBBox[3]) / Math.abs(prevBBox[3]);
     const lonDiff =
-        Math.abs(prevBBox.east - newBBox.east) / Math.abs(prevBBox.east);
+        Math.abs(prevBBox[2] - newBBox[2]) / Math.abs(prevBBox[2]);
+
+    //console.log("DEBUG USEPOIS latDiff: ", latDiff, " lonDiff: ", lonDiff)
 
     return latDiff > threshold || lonDiff > threshold;
+*/
+    const overlapIndex = calculateOverlapIndex(prevBBox, newBBox)
+
+    return overlapIndex < threshold
 };
 
 export async function getCoordinatesName(coords: LatLng | null): Promise<string> {
@@ -206,19 +263,26 @@ export const usePOIs = (region: Region) => {
 
     useEffect(() => {
         const newBBox = regionToBBox(region);
+        //console.log("DEBUG USEPOIS newBbox: ", newBBox)
         const zoomLevel = getZoomLevel(region);
+        
         if (
             !hasBBoxChangedSignificantly(oldBBox.current, newBBox) ||
             zoomLevel < 15
         ) {
-            return;
+            // console.log("DEBUG USEPOIS: ", hasBBoxChangedSignificantly(oldBBox.current, newBBox), zoomLevel)
+            //console.log("DEBUG USEPOIS oldbbox: ", oldBBox.current)
+            //return;
         }
-        console.debug(
-            "BBox has changed significantly, triggering overpass request"
-        );
-
+        else {
+            console.debug(
+                "BBox has changed significantly, triggering overpass request with"
+            );
+            trigger(newBBox);
+        }
+        
         oldBBox.current = newBBox;
-        trigger(newBBox);
+
     }, [region]);
 
     return {
