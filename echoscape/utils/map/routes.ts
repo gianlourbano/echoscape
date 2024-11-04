@@ -11,7 +11,7 @@ export const fetchRoute = async (startLat, startLng, endLat, endLng, setRouteCoo
             `${process.env.EXPO_PUBLIC_OSRM_API_URL}/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
         );
         const data = await response.json();
-        console.log(JSON.stringify(data, null, 2));
+        //console.log(JSON.stringify(data, null, 2));
         const routeCoords = data.routes[0].geometry.coordinates.map(
             (point) => ({
                 latitude: point[1],

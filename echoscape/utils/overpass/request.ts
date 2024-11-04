@@ -167,7 +167,7 @@ const calculateOverlapIndex = (bbox1: BBox, bbox2: BBox): number => {
   };
   
 
-const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.5) => {
+const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.2) => {
     if (!prevBBox) return true;
 /*
     const latDiff =
@@ -185,25 +185,34 @@ const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.5) => {
 };
 
 export async function getCoordinatesName(coords: LatLng | null): Promise<string> {
-    if (!coords) return ""
-    const latitude = coords.latitude
-    const longitude = coords.longitude
+    if (!coords) return "";
+    const latitude = coords.latitude;
+    const longitude = coords.longitude;
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`);
-        console.log("DEBUG request.ts getCoordinatesName response: ", response)
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
+            headers: {
+                'User-Agent': 'university-project-echoscape (liam.busnelliurso@studio.unibo.it)'
+            }
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Error fetching coordinates name: ${response.status} ${response.statusText}`);
+            console.error("Response body: ", errorText); 
+            return `${latitude}, ${longitude}`;
+        }
+
         const data = await response.json();
-        console.log("DEBUG request.ts getCoordinatesName data: ", data)
         if (data && data.address && data.address.road) {
             return data.address.road;
         } else {
             return `${latitude}, ${longitude}`;
         }
     } catch (error) {
-        console.error('DirectionsSelector: Error fetching coordinates name from (',latitude, ' ', longitude,'):', error);
+        console.error(`Error fetching coordinates name from (${latitude}, ${longitude}):`, error);
         return `${latitude}, ${longitude}`;
     }
-};
-
+}
 
 
 

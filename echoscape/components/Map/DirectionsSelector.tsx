@@ -6,6 +6,7 @@ import { LatLng } from 'react-native-maps';
 import { IconButton, Button } from 'react-native-paper';
 import { POICardProps } from '../MarkerModals/POICard';
 import { isPOIRecommended } from '@/utils/overpass/POIsAudios_Associations';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
 
@@ -161,7 +162,7 @@ const DirectionsSelector = (
         rightColumn: {
             width: '10%', // Spazio per il bottone
             justifyContent: 'center',
-            alignItems: 'center',
+            alignContent: 'center',
         },
         buttonRow: {
             flexDirection: 'row',
@@ -169,25 +170,24 @@ const DirectionsSelector = (
             marginBottom: 10,
         },
         buttonListening: {
-            flex: 1,
             backgroundColor: 'green',  // Bottone attivato
-            //padding: 15,
             borderRadius: 5,
-            alignItems: 'center',
         },
         buttonInactive: {
-            flex: 1,
             backgroundColor: 'gray',  // Bottone disattivato
-            //padding: 15,
             borderRadius: 5,
-            alignItems: 'center',
+        },
+        buttonContentStyle: {
+            flexDirection: 'row',
+            justifyContent: 'center',
+            width: '100%',
         },
     
     });
 
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {/* close button */}
             <View style={styles.leftColumn}>
                 <IconButton icon="close" size={24} onPress={onClose} />
@@ -200,7 +200,8 @@ const DirectionsSelector = (
                     <Button
                         mode={selectingStartPoint ? "contained" : "outlined"}
                         onPress={handleStartButtonPress}
-                        style={selectingStartPoint ? styles.buttonListening : styles.buttonInactive}
+                        style={[selectingStartPoint ? styles.buttonListening : styles.buttonInactive, { flex: 1 }]}
+                        contentStyle={styles.buttonContentStyle}
                     >
                         {button1Text}
                     </Button>
@@ -210,7 +211,8 @@ const DirectionsSelector = (
                     <Button
                         mode="outlined"
                         onPress={handleEndButtonPress}
-                        style={selectingEndPoint ? styles.buttonListening : styles.buttonInactive}
+                        style={[selectingEndPoint ? styles.buttonListening : styles.buttonInactive, { flex: 1 }]}
+                        contentStyle={styles.buttonContentStyle}
                     >
                         {button2Text}
                     </Button>
@@ -227,7 +229,7 @@ const DirectionsSelector = (
                     <IconButton icon="map-marker-right-outline" iconColor={!startPoint || !endPoint ? 'grey' : 'black'}/>
                 </Button>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

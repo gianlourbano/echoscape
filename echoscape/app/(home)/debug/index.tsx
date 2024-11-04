@@ -102,6 +102,10 @@ const AuthDebug = () => {
                 Test fetch
             </Button>
             <Button onPress={() => dispatch('logout')}>Logout</Button>
+            <Button onPress={async () => {
+              console.log("token: ", await ss_get("token"))
+            }}
+            > print token </Button>
         </DebugContainer>
     );
 };

@@ -27,14 +27,11 @@ export type AudioPageProps = {
 export default function Page({}) {
     const { lat, lng } = useLocalSearchParams<AudioPageProps>();
 
-    if (lat && lng) {
-        //...
-    } // /post?lat=123&lng=456
+    const loc = useLocation();
 
     const netInfo = useNetInfo();
 
     const { withAuthFetch } = useAuth();
-    const loc = useLocation();
 
     const [sound, setSound] = useState<Audio.Sound | null>(null);
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -125,7 +122,12 @@ export default function Page({}) {
                 type: 'audio/*'
             });
 
-            const response = await withAuthFetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/upload?longitude=${loc.coords.longitude}&latitude=${loc.coords.latitude}`, {
+            const audioCoords = {
+                lat: (lat && lng) ? lat : loc.coords.latitude,
+                lng: (lat && lng) ? lng : loc.coords.longitude
+            }
+
+            const response = await withAuthFetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/upload?longitude=${audioCoords.lng}&latitude=${audioCoords.lat}`, {
                 method: "POST",
                 body: form
             })

@@ -17,7 +17,7 @@ export async function isPOIRecommended(coordinate: LatLng): Promise<boolean> {
     const nAudiosAssociatedToPOI: number = await getNumberOfAudiosInPoint(coordinate)
     recommendation = recommendation || (nAudiosAssociatedToPOI === 0)
 
-    console.log("DEBUG [isPOIRecommended] n audios in that poi: ", nAudiosAssociatedToPOI)
+    console.log(`DEBUG [isPOIRecommended] n audios in that poi (lat ${coordinate.latitude}, lng ${coordinate.longitude}): `, nAudiosAssociatedToPOI)
 
     return recommendation
 }
@@ -32,7 +32,8 @@ useful to retrieve audios associated with a POI
 async function getAudiosFromPoint(coordinate: LatLng) {
     const token = await ss_get("token")
     console.log("DEBUG TOKEN ", token)
-    const audios = cachedFetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all`,
+    //TODO: CACHEDFETCH NON HA SENSO NON VA BENE
+    const audios = await cachedFetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all`,
         {
             method: 'GET',
             headers: {
@@ -43,15 +44,16 @@ async function getAudiosFromPoint(coordinate: LatLng) {
     )
     .then(data => data.json())
     .then(data => {
-        console.log("DEBUG [getAudiosFromPoint] /audio/all response: ", data)
+        console.log("DEBUG [getAudiosFromPoint] /audio/all data: ", data)
         return data
     })
     .then(data => 
         data.filter(audio => 
-            audio.latitude === coordinate.latitude && audio.longitude === coordinate.longitude
+            audio.latitude == coordinate.latitude && audio.longitude == coordinate.longitude
         )
     ).catch(error => console.log("[getAudiosFromPoint] error fetching audios: ", error))
 
+    console.log("DEBUG [POIsAudios_associations getAudiosFromPoint] audios: ", audios)
     return audios;
 }
 
