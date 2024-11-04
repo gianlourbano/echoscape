@@ -79,6 +79,7 @@ const UserAvatar = ({ user }: { user: UserData }) => {
             source={{ uri: image }}
             size={80}
             onTouchStart={() => pickImage()}
+            theme={{ colors: { primary: "#16a34a" } }}
         />
     );
 };
@@ -192,7 +193,6 @@ const LocalAudioView = () => {
                     refreshing={refreshing}
                     onRefresh={() => loadRecordings()}
                 />
-
                 {recordings.length === 0 ? (
                     <View className="flex flex-col items-center">
                         {(() => {
@@ -238,7 +238,7 @@ const renderScene = SceneMap({
 });
 
 const ProfilePage = () => {
-    const { user, dispatch } = useAuth();
+    const { user, dispatch, withAuthFetch } = useAuth();
 
     const layout = useWindowDimensions();
 
@@ -257,37 +257,48 @@ const ProfilePage = () => {
                         {user?.username}
                     </Text>
                 </Link>
-                <Button onPress={() => dispatch("logout")}>Logout</Button>
+                <View>
+                    <Button onPress={() => dispatch("logout")}>Logout</Button>
+                    <Button
+                        onPress={() => {
+                            withAuthFetch(
+                                `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/auth/unsubscribe`,
+                                {
+                                    method: "DELETE",
+                                }
+                            ).then(() => dispatch("logout"));
+                        }}
+                    >
+                        DEL ACC
+                    </Button>
+                </View>
             </View>
             <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
-            <ScrollView>
-                <Stats />
-                <View className="border-solid border-2 border-zinc-800 my-4 mx-8" />
-                <View className="p-4 flex justify-center gap-4">
-                    <Text variant="titleLarge">Uploaded Audios</Text>
-                </View>
 
-                <TabView
-                    navigationState={{ index, routes }}
-                    renderScene={renderScene}
-                    onIndexChange={setIndex}
-                    initialLayout={{ width: layout.width }}
-                    renderTabBar={(props) => (
-                        <View className="flex flex-row w-full justify-evenly">
-                            {props.navigationState.routes.map((route, i) => (
-                                <Button
-                                    key={`${route.key}-${i}`}
-                                    onPress={() => {
-                                        setIndex(i);
-                                    }}
-                                >
-                                    {route.title}
-                                </Button>
-                            ))}
-                        </View>
-                    )}
-                />
-            </ScrollView>
+            <View className="p-4 flex justify-center gap-4">
+                <Text variant="titleLarge">Uploaded Audios</Text>
+            </View>
+
+            <TabView
+                navigationState={{ index, routes }}
+                renderScene={renderScene}
+                onIndexChange={setIndex}
+                initialLayout={{ width: layout.width }}
+                renderTabBar={(props) => (
+                    <View className="flex flex-row w-full justify-evenly">
+                        {props.navigationState.routes.map((route, i) => (
+                            <Button
+                                key={`${route.key}-${i}`}
+                                onPress={() => {
+                                    setIndex(i);
+                                }}
+                            >
+                                {route.title}
+                            </Button>
+                        ))}
+                    </View>
+                )}
+            />
         </SafeAreaView>
     );
 };

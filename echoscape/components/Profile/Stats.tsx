@@ -1,9 +1,18 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, Platform } from "react-native";
 import { useAuth } from "@/utils/auth/AuthProvider";
 import { useAudioDB, BackendAudioData } from "@/utils/sql/sql";
 import { useState, useEffect } from "react";
+import { PolarChart, Pie, PieSliceData, useSlicePath } from "victory-native";
+import {
+    Fill,
+    matchFont,
+    Path,
+    Text as SKText,
+    useFont,
+    useFonts,
+} from "@shopify/react-native-skia";
 
-type CrunchStatus = "idle" | "crunching" | "done";
+type CrunchStatus = "idle" | "crunching" | "done" | "empty";
 
 interface TileData {
     text: string;
@@ -13,21 +22,50 @@ interface TileData {
 export const Stats = () => {
     const { user } = useAuth();
 
+    const [topTiles, setTopTiles] = useState<TileData[]>([]);
     const [tiles, setTiles] = useState<TileData[]>([]);
     const [genres, setGenres] = useState<Record<string, number>>({});
-    const [topGenre, setTopGenre] = useState<string>("");
 
     const { getAudioData } = useAudioDB();
 
     const [crunchingStatus, setCrunchingStatus] =
-        useState<CrunchStatus>("idle"); // porcodio
+        useState<CrunchStatus>("idle");
 
     const crunchData = async () => {
         setCrunchingStatus("crunching");
-        const data = (await getAudioData()).map((audio) =>
+        const full_data = await getAudioData();
+
+        const data = full_data.map((audio) =>
             JSON.parse(audio.backendData)
         ) as BackendAudioData[];
-        console.log(JSON.stringify(data, null, 2));
+
+        // filter out eventual broken data (shouldn't happen)
+        data.filter((audio) => audio.bpm !== undefined);
+
+        if (data.length === 0) {
+            setCrunchingStatus("empty");
+            return;
+        }
+
+        topTiles.push({
+            text: "Total tracks",
+            percentage: `${data.length}`,
+        });
+
+        topTiles.push({
+            text: "Total tracks",
+            percentage: `${data.length}`,
+        });
+
+        topTiles.push({
+            text: "Total tracks",
+            percentage: `${data.length}`,
+        });
+
+        topTiles.push({
+            text: "Total tracks",
+            percentage: `${data.length}`,
+        });
 
         const tiles: TileData[] = [];
 
@@ -115,8 +153,6 @@ export const Stats = () => {
             }, {} as Record<string, number>)
         );
 
-        console.log(top_5);
-
         setCrunchingStatus("done");
 
         setTiles(tiles);
@@ -126,12 +162,21 @@ export const Stats = () => {
         crunchData();
     }, []);
 
-    if(crunchingStatus !== "done") {
-        return <Text>Crunching...</Text>
+    if (crunchingStatus === "empty") {
+        return (
+            <Text className="text-white text-lg text-center">
+                No data to show
+            </Text>
+        );
+    }
+
+    if (crunchingStatus !== "done") {
+        return <Text className="text-white text-lg">Crunching...</Text>;
     }
 
     return (
-        <View className="p-4 flex flex-col gap-4">
+        <View className="flex flex-col gap-4">
+            <View></View>
             <View className="bg-zinc-800 rounded-lg p-4">
                 <Text className="text-4xl font-bold text-white">Genres</Text>
                 <Text className="p-2 text-white text-xl">
@@ -150,6 +195,7 @@ export const Stats = () => {
                         <View
                             style={{ width: `${count}%` }}
                             className="bg-green-600 px-4 py-1 rounded-md"
+                            key={genre}
                         >
                             <Text key={genre} className="text-white">
                                 {genre}
@@ -171,6 +217,89 @@ export const Stats = () => {
                     </View>
                 ))}
             </ScrollView>
+            <View className="h-80 p-2">
+                <PolarChart
+                    data={DATA()} // 👈 specify your data
+                    labelKey={"label"} // 👈 specify data key for labels
+                    valueKey={"value"} // 👈 specify data key for values
+                    colorKey={"color"} // 👈 specify data key for color
+                >
+                    <Pie.Chart innerRadius={30}>
+                        {({ slice }) => (
+                            <>
+                                <MyCustomSlice slice={slice} minVal={125} maxVal={225}/>
+                                <Pie.SliceAngularInset
+                                    angularInset={{
+                                        angularStrokeWidth: 5,
+                                        angularStrokeColor: "#3f3f46",
+                                    }}
+                                />
+                            </>
+                        )}
+                    </Pie.Chart>
+                </PolarChart>
+            </View>
         </View>
     );
 };
+
+function MyCustomSlice({ slice, minVal, maxVal }: { slice: PieSliceData, minVal: number, maxVal: number }) {
+    // 👇 use the hook to generate a path object.
+
+    const fontFamily = Platform.select({ ios: "Helvetica", default: "serif" });
+    const fontStyle = {
+        fontFamily,
+        fontSize: 14,
+        fontStyle: "italic",
+        fontWeight: "bold",
+    } as const;
+
+    const font = matchFont(fontStyle);
+
+    const path = useSlicePath({
+        slice: {
+            ...slice,
+            radius: slice.value / 2,
+        },
+    });
+
+    console.log(slice);
+
+    /* 👇 experiment wtih any other customizations you want */
+    return (
+        <>
+            <Path path={path} color={slice.color} style="fill" />
+            {slice.value > 180 ? (
+                <SKText
+                    x={
+                        slice.center.x +
+                        Math.cos((slice.startAngle + (slice.sweepAngle / 2)) *  0.015708) * (130)
+                    }
+                    y={
+                        slice.center.y +
+                        Math.sin((slice.startAngle + (slice.sweepAngle / 2)) *  0.015708) * (130)
+                    }
+                    font={font}
+                    text={slice.label}
+                ></SKText>
+            ) : null}
+        </>
+    );
+}
+
+// helper functions for example purposes:
+function randomNumber() {
+    return Math.floor(Math.random() * 100) + 125;
+}
+function generateRandomColor(): string {
+    // Generating a random number between 0 and 0xFFFFFF
+    const randomColor = Math.floor(Math.random() * 0xffffff);
+    // Converting the number to a hexadecimal string and padding with zeros
+    return `#${randomColor.toString(16).padStart(6, "0")}`;
+}
+const DATA = (numberPoints = 20) =>
+    Array.from({ length: numberPoints }, (_, index) => ({
+        value: randomNumber(),
+        color: "#16a34a",
+        label: `Label ${index + 1}`,
+    }));

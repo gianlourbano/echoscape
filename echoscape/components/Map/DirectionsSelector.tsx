@@ -145,7 +145,6 @@ const DirectionsSelector = (
     const styles = StyleSheet.create({
         container: {
             flexDirection: 'row',
-            height: componentHeight,
             width: '100%',
             backgroundColor: '#f5f5f5',
             padding: 10,

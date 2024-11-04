@@ -15,7 +15,8 @@ export type AuthStatus =
     | "loading"
     | "authenticated"
     | "unauthenticated"
-    | `error-${Error}`;
+    | `error-${Error}`
+    | "initial";
 
 export type UserData = {
     username: string;

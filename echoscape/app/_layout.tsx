@@ -16,16 +16,14 @@ import { AudioData, getToBeUploadedAudioData } from "@/utils/sql/sql";
 import { uploadAudio } from "@/utils/tasks/audioUpload";
 import { simpleDebounce } from "@/utils/utils";
 
+import { SplashScreen } from "expo-router";
 
-
+SplashScreen.preventAutoHideAsync()
 
 // assign this value to true if you want to disable all console.debug
 if (false) {
     console.debug = () => {};
 }
-
-
-
 
 export default function RootLayout() {
     

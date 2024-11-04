@@ -53,7 +53,7 @@ const getToken = async (payload: { username: string; password: string }) => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-    const [authStatus, setAuthStatus] = useState<AuthStatus>("unauthenticated");
+    const [authStatus, setAuthStatus] = useState<AuthStatus>("initial");
     const [user, setUser] = useState<UserData | undefined>(undefined);
 
     const router = useRouter();
@@ -77,8 +77,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         username,
                         password,
                     };
-
-                    //setAuthStatus("loading");
 
                     console.log("refreshing token with", payload);
 

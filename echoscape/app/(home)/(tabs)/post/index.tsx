@@ -11,6 +11,8 @@ import { useNetInfo } from "@react-native-community/netinfo";
 import { useAudioDB } from "@/utils/sql/sql";
 import { useAuth } from "@/utils/auth/AuthProvider";
 import { useLocation } from "@/utils/location/location";
+import { Recorder } from "@/components/Audio/Recorder";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 type AudioItem = {
     id: string;
@@ -108,11 +110,6 @@ export default function Page({}) {
 
     const uploadAudio = async (uri: string) => {
         if (netInfo.isConnected && netInfo.isInternetReachable) {
-            console.log("[AUDIO UP] Audio can be uploaded!");
-
-            // fetch... 
-
-            
 
             const form = new FormData();
             // @ts-ignore
@@ -132,19 +129,16 @@ export default function Page({}) {
                 body: form
             })
 
+            if(!response.ok) {
+                console.error("Error uploading audio:", await response.json());
+                return
+            }
+
             const data = await response.json();
 
-            await addAudioData(uri).then(async () => {
-                const r = await getAudioData();
-                console.log(r);
-            });
-
-            const backendData = data;
+            await addAudioData(uri);
         
-            await uploadAudioData(uri, JSON.stringify(backendData)).then(async () => {
-                const r = await getAudioData();
-                console.log(r);
-            });
+            await uploadAudioData(uri, JSON.stringify(data));
 
             await FileSystem.moveAsync({
                 from: uri,
@@ -152,9 +146,7 @@ export default function Page({}) {
             });
 
             console.log("[AUDIO UP] Audio uploaded!");
-
             
-
             loadRecordings();
 
         } else {
@@ -171,6 +163,10 @@ export default function Page({}) {
 
     return (
         <PageContainer className="flex-1 bg-zinc-700">
+            <GestureHandlerRootView>
+
+            <Recorder />
+            </GestureHandlerRootView>
             <View>
                 <Text className="text-2xl font-bold text-center text-white">
                     Record audio
@@ -180,6 +176,7 @@ export default function Page({}) {
                 <Text className="text-lg text-center text-white">
                     Record audio and upload it!
                 </Text>
+                
                 <View className="flex-row items-center justify-center">
                     <IconButton
                         icon="microphone"
@@ -191,6 +188,7 @@ export default function Page({}) {
                             : "Tap to start recording"}
                     </Text>
                 </View>
+               
                 <View className="flex flex-col gap-4">
                     {audioItems.length > 0 &&
                         audioItems.map((item, index) => {

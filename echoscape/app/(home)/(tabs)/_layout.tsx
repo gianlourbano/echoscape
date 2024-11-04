@@ -112,11 +112,10 @@ export default function App() {
                         },
                     }}
                 />
-
-                <MaterialBottomTabs.Screen
-                    name="profile/index"
+                 <MaterialBottomTabs.Screen
+                    name="stats/index"
                     options={{
-                        tabBarLabel: "Profile",
+                        tabBarLabel: "Stats",
 
                         tabBarIcon(props) {
                             return (
@@ -132,11 +131,34 @@ export default function App() {
 
                                         source={
                                             props.focused
+                                                ? "chart-line-variant"
+                                                : "chart-line-variant"
+                                        }
+                                    />
+                                </Pressable>
+                            );
+                        },
+                    }}
+                />
+
+                <MaterialBottomTabs.Screen
+                    name="profile/index"
+                    options={{
+                        tabBarLabel: "Profile",
+
+                        tabBarIcon(props) {
+                            return (
+                                    <Icon
+                                        color={props.color}
+                                        size={24}
+                                        // if i click on the icon 5 times, open the debug menu
+
+                                        source={
+                                            props.focused
                                                 ? "account-circle"
                                                 : "account-circle-outline"
                                         }
                                     />
-                                </Pressable>
                             );
                         },
                     }}
