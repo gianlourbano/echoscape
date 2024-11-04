@@ -29,7 +29,7 @@ export const getAudioData = async (): Promise<AudioData[]> => {
         throw new Error("Database not initialized");
     }
     const username = await ss_get("username");
-    return db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ?`, [username]);
+    return db.getAllAsync<AudioData>(`SELECT * FROM audios WHERE user = ? AND uploaded = 1`, [username]);
 };
 
 export const getToBeUploadedAudioData = async (): Promise<AudioData[]> => {

@@ -1,8 +1,8 @@
 import { View } from "react-native";
 
-import { SafeAreaView, Text } from "moti";
+import { Text } from "moti";
 
-import { Redirect, Stack } from "expo-router";
+import { Redirect, SplashScreen, Stack } from "expo-router";
 import { useAuth } from "@/utils/auth/AuthProvider";
 
 export default function App() {
@@ -14,8 +14,11 @@ export default function App() {
     }
 
     if (status === "unauthenticated") {
+        SplashScreen.hideAsync();
         return <Redirect href="/login" />;
     }
+
+    SplashScreen.hideAsync();
 
     
     return (
@@ -31,6 +34,7 @@ export default function App() {
             <Stack.Screen name="song/[songid]" options={{ presentation: "modal" }} />
             <Stack.Screen name="poi/[poi]" options={{ presentation: "modal" }} />
             <Stack.Screen name="debug/index" options={{presentation: "modal"}} />
+            <Stack.Screen name="report/index" options={{presentation: "modal"}} />
         </Stack>
     );
 }

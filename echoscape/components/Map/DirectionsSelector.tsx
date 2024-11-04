@@ -6,6 +6,7 @@ import { LatLng } from 'react-native-maps';
 import { IconButton, Button } from 'react-native-paper';
 import { POICardProps } from '../MarkerModals/POICard';
 import { isPOIRecommended } from '@/utils/overpass/POIsAudios_Associations';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { height } = Dimensions.get('window');
 
@@ -144,7 +145,6 @@ const DirectionsSelector = (
     const styles = StyleSheet.create({
         container: {
             flexDirection: 'row',
-            height: componentHeight,
             width: '100%',
             backgroundColor: '#f5f5f5',
             padding: 10,
@@ -187,7 +187,7 @@ const DirectionsSelector = (
 
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
             {/* close button */}
             <View style={styles.leftColumn}>
                 <IconButton icon="close" size={24} onPress={onClose} />
@@ -227,7 +227,7 @@ const DirectionsSelector = (
                     <IconButton icon="map-marker-right-outline" iconColor={!startPoint || !endPoint ? 'grey' : 'black'}/>
                 </Button>
             </View>
-        </View>
+        </SafeAreaView>
     );
 };
 

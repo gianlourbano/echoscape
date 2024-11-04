@@ -8,16 +8,10 @@ export default function PageContainer({
     className?: string;
 }) {
     return (
-        <SafeAreaView className={`${className}`}>
-            <View className={`${className}`} style={styles.container}>
+        <SafeAreaView className={`bg-zinc-700 h-full ${className}`}>
+            <View className={` p-4 ${className}`} >
                 {children}
             </View>
         </SafeAreaView>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        padding: 10,
-    },
-});
