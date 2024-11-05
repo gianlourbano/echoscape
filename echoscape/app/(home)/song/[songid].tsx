@@ -115,9 +115,15 @@ export default function SongPage() {
         }
     );
 
-    return isLoading ? (
-        <Text>Loading...</Text>
-    ) : (
+    if(isLoading) {
+        return <Text>Loading...</Text>
+    }
+
+    if(error) {
+        return <Text>Error: {error}</Text>
+    }
+
+    return (
         <PageContainer className="pb-0 bg-zinc-700 h-full flex flex-col gap-4 w-full">
             <Text className="mt-2 text-4xl font-bold text-white">
                 Audio #{songid}{" "}

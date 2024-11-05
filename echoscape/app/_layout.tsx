@@ -131,7 +131,7 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
     if (currentDbVersion === 0) {
         await db.execAsync(`
   PRAGMA journal_mode = 'wal';
-  CREATE TABLE audios (id INTEGER PRIMARY KEY NOT NULL, user TEXT NOT NULL, uri TEXT NOT NULL, uploaded BOOLEAN NOT NULL DEFAULT 0, backendData TEXT, backend_id NUMBER DEFAULT NULL);
+  CREATE TABLE audios (id INTEGER PRIMARY KEY NOT NULL, user TEXT NOT NULL, uri TEXT NOT NULL, uploaded BOOLEAN NOT NULL DEFAULT 0, backendData TEXT DEFAULT NULL);
   `);
         currentDbVersion = 1;
     }
