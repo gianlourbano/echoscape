@@ -58,7 +58,7 @@ export default function RootLayout() {
             }
         }, 5000))
 
-        console.log("DEBUG root layout mounted")
+        console.log("root layout mounted")
             
     }, [])
 

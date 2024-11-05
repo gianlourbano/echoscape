@@ -46,7 +46,7 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
     const [poiListData, setPoiListData] = useState<POICardProps[]>([])
 
     useEffect(() => {
-        console.log("DEBUG ClusteredMap component mounted with in")
+        console.log("ClusteredMap component mounted with in")
         if (initialLatitude && initialLongitude)
             setRegion({
                 latitude: initialLatitude,

@@ -10,7 +10,7 @@ export const cachedFetch: typeof fetch = async (
         const cachedResponseText = await AsyncStorage.getItem(cacheKey);
 
         if (cachedResponseText) {
-            console.log("DEBUG cache hit: ", url)
+            console.log("[FETCH] cache hit: ", url)
             return new Response(cachedResponseText);
         }
 

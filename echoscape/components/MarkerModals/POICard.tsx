@@ -35,10 +35,7 @@ const POICard: React.FC<POICardProps> = ({ name, address, coordinates, recommend
 
 
     function handleCardTitlePress() {
-        console.log("debug togliere titolo premuto")
-        //redirect a /post con url lat e lng
         router.navigate(`/post?lat=${coordinates.latitude}&lng=${coordinates.longitude}`)
-        console.log("DEBUG DOPO NAVIGATE AAAAAAAA")
         onClose()
     }
 

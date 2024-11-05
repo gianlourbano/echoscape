@@ -6,7 +6,7 @@ import { useNetInfo, refresh } from "@react-native-community/netinfo";
 import { ScrollView } from "moti";
 import { useCallback, useEffect, useState } from "react";
 import { TouchableOpacity, View, StyleSheet, TextInput } from "react-native";
-import MapView, { UrlTile } from "react-native-maps";
+import MapView, { LatLng, UrlTile } from "react-native-maps";
 import { Surface, Button, Text, Card } from "react-native-paper";
 import * as TaskManager from 'expo-task-manager';
 import { sendNotification } from "@/utils/notifications/manageNotifications";
@@ -15,6 +15,7 @@ import { simpleDebounce } from "@/utils/utils";
 import Collapsible from 'react-native-collapsible';
 import { createOverpassPathQuery, fetchOverpass } from "@/utils/overpass/request";
 import { matchPOIsToNodes } from "@/utils/map/routes";
+import { getPOIsAssociatedToPoint } from "@/utils/overpass/POIsAudios_Associations";
 
 
 type DebugContext = {
@@ -875,6 +876,17 @@ const MapDebug = () => {
         console.log("matchedPOIs: ", matchedPOIs)
     }
 
+    async function try_getPOIsAssociatedToPoint() {
+      /*
+      ["Colonna dell'Immacolata"] addresses:  [{"id": 5228009868, "lat": 44.4943475, "lon": 11.3364348, "tags": {"addr:city": "Bologna", "addr:street": "Piazza Malpighi", "historic": "memorial", "memorial": "statue", "name": "Colonna dell'Immacolata"}, "type": "node"}]
+      */
+      const coords: LatLng = {
+        latitude: 44.4943475,
+        longitude: 11.3364348
+      }
+      console.log("[DEBUG] getPOIsAssociatedToPoint: ", await getPOIsAssociatedToPoint(coords))
+    }
+
 
     // Funzione per gestire la visibilità di tutti gli elementi
     const toggleVisibility = () => {
@@ -916,6 +928,9 @@ const MapDebug = () => {
             <Button onPress={eraseAudioCache}>Clear audio marker cache</Button>
             <Button onPress={tryOverpassRequest}>
                 stampa risposta richiesta overpass e matched POIs
+            </Button>
+            <Button onPress={try_getPOIsAssociatedToPoint}>
+              prova getPOIsAssociatedToPoint
             </Button>
             <Button onPress={toggleVisibility}>
                 {isVisible ? 'Hide All audio cache' : 'Show All audio cache'}
