@@ -16,14 +16,13 @@ usage:
 export function usePlaySound(
     onPlayBackStatusUpdate?: (status: AVPlaybackStatus) => void
 ) {
-
     Notifications.setNotificationHandler({
         handleNotification: async () => ({
-          shouldShowAlert: true,
-          shouldPlaySound: false,
-          shouldSetBadge: false,
+            shouldShowAlert: true,
+            shouldPlaySound: false,
+            shouldSetBadge: false,
         }),
-      });
+    });
 
     const [sound, setSound] = useState<Audio.Sound | null>(null);
 
@@ -37,14 +36,14 @@ export function usePlaySound(
         setSound(sound);
 
         console.log("usePlaySound: Playing Sound");
-        await sound.playAsync();
+        //await sound.playAsync();
         Notifications.scheduleNotificationAsync({
             content: {
-              title: "🎵",
-              body: "Playing sound",
+                title: "🎵",
+                body: "Playing sound",
             },
             trigger: null,
-          });
+        });
 
         //unloads sound right after playing it
         //sound.unloadAsync();
@@ -59,7 +58,11 @@ export function usePlaySound(
             : undefined;
     }, [sound]);
 
-    return playSound;
+    return {
+        playSound,
+        pauseSound: sound?.pauseAsync || (() => {}),
+        stopSound: sound?.stopAsync,
+    };
 }
 
 /*

@@ -53,12 +53,12 @@ export const getAlreadyUploadedAudioData = async (): Promise<AudioData[]> => {
     }
 };
 
-export const uploadAudioData = async (uri: string, backendData: string): Promise<void> => {
+export const uploadAudioData = async (uri: string, backendData: string, backendID: number): Promise<void> => {
     if (!db) {
         throw new Error("Database not initialized");
     }
     const newUri = uri.replace("/tmp", "");
-    await db.runAsync(`UPDATE audios SET uploaded = 1, backendData = ?, uri = ? WHERE uri = ?`, [backendData, newUri, uri]);
+    await db.runAsync(`UPDATE audios SET uploaded = 1, backendData = ?, uri = ?, backend_id = ? WHERE uri = ?`, [backendData, newUri,backendID, uri]);
 };
 
 export const addAudioData = async (uri: string): Promise<void> => {
@@ -83,6 +83,14 @@ export const deleteAllAudioData = async (): Promise<void> => {
     await db.runAsync(`DELETE FROM audios`);
 };
 
+export const getAudioFromBackendID = async (id: number): Promise<string | null> => {
+    if (!db) {
+        throw new Error("Database not initialized");
+    }
+    const audio  = await db.getFirstAsync(`SELECT * FROM audios WHERE backend_id = ?`, [id]) as AudioData;
+    return audio ? audio.uri : null;
+}
+
 export const useAudioDB = () => {
     return {
         getAudioData,
@@ -92,5 +100,6 @@ export const useAudioDB = () => {
         addAudioData,
         deleteAudioData,
         deleteAllAudioData,
+        getAudioFromBackendID
     };
 }

@@ -10,7 +10,7 @@ import MapView, { LatLng, UrlTile } from "react-native-maps";
 import { Surface, Button, Text, Card } from "react-native-paper";
 import * as TaskManager from 'expo-task-manager';
 import { sendNotification } from "@/utils/notifications/manageNotifications";
-import { AudioData, getToBeUploadedAudioData, getAlreadyUploadedAudioData } from "@/utils/sql/sql";
+import { AudioData, getToBeUploadedAudioData, getAlreadyUploadedAudioData, deleteAllAudioData } from "@/utils/sql/sql";
 import { simpleDebounce } from "@/utils/utils";
 import Collapsible from 'react-native-collapsible';
 import { createOverpassPathQuery, fetchOverpass } from "@/utils/overpass/request";
@@ -174,7 +174,11 @@ const FileSystemDebug = () => {
 const SqlDebug = () => {
     return (
         <DebugContainer title="SQLite">
-            <Text>Not implemented</Text>
+            <Button onPress={() => {
+              deleteAllAudioData()
+            }}>
+                Delete all audio data
+            </Button>
         </DebugContainer>
     );
 };

@@ -8,10 +8,8 @@ export default function PageContainer({
     className?: string;
 }) {
     return (
-        <SafeAreaView className={`bg-zinc-700 h-full ${className}`}>
-            <View className={` p-4 ${className}`} >
+            <View className={`bg-zinc-700 h-full p-4 ${className}`} >
                 {children}
             </View>
-        </SafeAreaView>
     );
 }

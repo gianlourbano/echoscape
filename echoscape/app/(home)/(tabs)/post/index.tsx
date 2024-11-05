@@ -25,7 +25,6 @@ export type AudioPageProps = {
     lng?: string;
 };
 
-
 export default function Page({}) {
     const { lat, lng } = useLocalSearchParams<AudioPageProps>();
 
@@ -79,8 +78,6 @@ export default function Page({}) {
         }
     }
 
-
-
     async function stopRecording() {
         if (!recording) return;
 
@@ -109,14 +106,16 @@ export default function Page({}) {
     }
 
     const uploadAudio = async (uri: string) => {
-        if (netInfo.isConnected && netInfo.isInternetReachable) {
 
+        await addAudioData(uri);
+
+        if (netInfo.isConnected && netInfo.isInternetReachable) {
             const form = new FormData();
             // @ts-ignore
-            form.append('file', {
+            form.append("file", {
                 uri: uri,
-                name: 'audio.m4a',
-                type: 'audio/*'
+                name: "audio.m4a",
+                type: "audio/*",
             });
 
             const audioCoords = {
@@ -129,16 +128,46 @@ export default function Page({}) {
                 body: form
             })
 
-            if(!response.ok) {
+            if (!response.ok) {
                 console.error("Error uploading audio:", await response.json());
-                return
+                return;
             }
 
             const data = await response.json();
+            const allaudios = await (
+                await withAuthFetch(
+                    `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/my`
+                )
+            ).json();
 
-            await addAudioData(uri);
-        
-            await uploadAudioData(uri, JSON.stringify(data));
+            // search for the audio we just uploaded
+
+            console.log(allaudios);
+            console.log(data);
+
+            // refetch every fucking single audio
+
+            const audio_data_all = await Promise.all((
+                await Promise.all(
+                    allaudios.map((audio) => {
+                        return withAuthFetch(
+                            `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`
+                        );
+                    })
+                )
+            ).map((res) => res.json()));
+
+            // now try and match loudness, bpm and danceability
+
+            const final_backend_id = audio_data_all.find((audio) => {
+                return audio.tags.bpm === data.bpm && audio.tags.loudness === data.loudness && audio.tags.danceability === data.danceability
+            })?.id;
+
+            console.log(final_backend_id);
+
+            
+
+            await uploadAudioData(uri, JSON.stringify(data), final_backend_id);
 
             await FileSystem.moveAsync({
                 from: uri,
@@ -146,26 +175,19 @@ export default function Page({}) {
             });
 
             console.log("[AUDIO UP] Audio uploaded!");
-            
-            loadRecordings();
 
+            loadRecordings();
         } else {
             console.log(
                 "[AUDIO UP] No internet connection. Scheduled for later."
             );
-
-            await addAudioData(uri).then(async () => {
-                const r = await getAudioData();
-                console.log(r);
-            });
         }
     };
 
     return (
         <PageContainer className="flex-1 bg-zinc-700">
             <GestureHandlerRootView>
-
-            <Recorder />
+                <Recorder />
             </GestureHandlerRootView>
             <View>
                 <Text className="text-2xl font-bold text-center text-white">
@@ -176,7 +198,7 @@ export default function Page({}) {
                 <Text className="text-lg text-center text-white">
                     Record audio and upload it!
                 </Text>
-                
+
                 <View className="flex-row items-center justify-center">
                     <IconButton
                         icon="microphone"
@@ -188,7 +210,7 @@ export default function Page({}) {
                             : "Tap to start recording"}
                     </Text>
                 </View>
-               
+
                 <View className="flex flex-col gap-4">
                     {audioItems.length > 0 &&
                         audioItems.map((item, index) => {
@@ -199,19 +221,13 @@ export default function Page({}) {
                                         name={item}
                                         refresh={loadRecordings}
                                     />
-                                    
+
                                     <View className="flex flex-row w-full gap-2 justify-evenly">
-                                        <Button onPress={async () => {
-                                            
-                                        }}>
+                                        <Button onPress={async () => {}}>
                                             Transcribe
                                         </Button>
                                         <Button
-                                            onPress={() =>
-                                                uploadAudio(
-                                                    item
-                                                )
-                                            }
+                                            onPress={() => uploadAudio(item)}
                                         >
                                             Upload
                                         </Button>

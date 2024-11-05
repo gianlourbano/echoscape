@@ -27,6 +27,8 @@ import { useFetch } from "@/hooks/useFetch";
 
 import { TabView, SceneMap } from "react-native-tab-view";
 import { Stats } from "@/components/Profile/Stats";
+import { AudioPlayer } from "@/components/Audio/AudioPlayer";
+import { useAudioDB } from "@/utils/sql/sql";
 
 const funnyTextsLmao = [
     {
@@ -93,52 +95,62 @@ const UploadedAudio = ({
 }) => {
     const { withAuthFetch } = useAuth();
 
+    const [uri, setUri] = useState<string | null>(null);
+
+    const { getAudioFromBackendID } = useAudioDB();
+
+    useEffect(() => {
+        getAudioFromBackendID(audio.id).then((audio) => {
+            setUri(audio);
+        });
+    });
+
     return (
-        <View
-            key={audio.id}
-            className="p-4 bg-zinc-800 flex flex-row items-center rounded-md"
-        >
-            <View className="flex-1">
-                <Link href={`/song/${audio.id}`}>
-                    <Text variant="bodyLarge">Audio #{audio.id}</Text>
-                </Link>
+        <View key={audio.id} className="flex flex-col bg-zinc-800 rounded-md p-4">
+            <View className=" bg-zinc-800 flex flex-row items-center rounded-md">
+                <View className="flex-1">
+                    <Link href={`/song/${audio.id}`}>
+                        <Text variant="bodyLarge">Audio #{audio.id}</Text>
+                    </Link>
+                </View>
+                <View className="flex flex-row items-center justify-center">
+                    <Link
+                        href={`/?latitude=${audio.latitude}&longitude=${audio.longitude}`}
+                        asChild
+                    >
+                        <IconButton icon="map-marker-radius" />
+                    </Link>
+                    <IconButton
+                        icon={audio.hidden ? "eye-off" : "eye"}
+                        onPress={() => {
+                            withAuthFetch(
+                                `${
+                                    process.env.EXPO_PUBLIC_BACKEND_BASE_URL
+                                }/audio/my/${audio.id}/${
+                                    audio.hidden ? "show" : "hide"
+                                }`
+                            ).then(() => mutate());
+                        }}
+                    />
+                    <IconButton
+                        icon="delete"
+                        onPress={() => {
+                            withAuthFetch(
+                                `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`,
+                                {
+                                    method: "DELETE",
+                                }
+                            )
+                                .then((res) => res.json())
+                                .then((res) => {
+                                    console.log(res);
+                                    mutate();
+                                });
+                        }}
+                    />
+                </View>
             </View>
-            <View className="flex flex-row items-center justify-center">
-                <Link
-                    href={`/?latitude=${audio.latitude}&longitude=${audio.longitude}`}
-                    asChild
-                >
-                    <IconButton icon="map-marker-radius" />
-                </Link>
-                <IconButton
-                    icon={audio.hidden ? "eye-off" : "eye"}
-                    onPress={() => {
-                        withAuthFetch(
-                            `${
-                                process.env.EXPO_PUBLIC_BACKEND_BASE_URL
-                            }/audio/my/${audio.id}/${
-                                audio.hidden ? "show" : "hide"
-                            }`
-                        ).then(() => mutate());
-                    }}
-                />
-                <IconButton
-                    icon="delete"
-                    onPress={() => {
-                        withAuthFetch(
-                            `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`,
-                            {
-                                method: "DELETE",
-                            }
-                        )
-                            .then((res) => res.json())
-                            .then((res) => {
-                                console.log(res);
-                                mutate();
-                            });
-                    }}
-                />
-            </View>
+            {uri && <AudioPlayer uri={uri} />}
         </View>
     );
 };
