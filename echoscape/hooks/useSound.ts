@@ -35,6 +35,10 @@ export function usePlaySound(
         );
         setSound(sound);
 
+        await sound.setStatusAsync({
+             shouldPlay: true
+        });
+
         console.log("usePlaySound: Playing Sound");
         //await sound.playAsync();
         Notifications.scheduleNotificationAsync({

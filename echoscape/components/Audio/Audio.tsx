@@ -68,7 +68,9 @@ export const Audio = ({ index, name, refresh }: AudioProps) => {
     const [date, time] = extractDate(extractFileName(name));
 
     useEffect(() => {
-        if (isPlaying) playSound({ uri: name });
+        if (isPlaying) {
+            console.log(name)
+            playSound({ uri: name })};
     }, [isPlaying]);
 
     return (
