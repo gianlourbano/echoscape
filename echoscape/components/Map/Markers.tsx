@@ -84,7 +84,17 @@ function POIMarkerCallout({ point }: MarkerProps) {
     return (
         <View className="w-56 flex flex-row gap-2 items-center justify-center" key={point.properties.id}>
             <Icon source={"bookshelf"} size={30} color="black" />
-            <Link href={`/poi/${point.properties.id}`} key={point.properties.id} className=" text-center max-w-40">
+            <Link 
+                href={`/poi/${
+                    point.properties.wikidata
+                        ? point.properties.wikidata.startsWith('https://www.wikidata.org/wiki/')
+                            ? point.properties.wikidata.slice(30)
+                            : point.properties.wikidata
+                        : ''
+                }`}
+                key={point.properties.id} 
+                className=" text-center max-w-40"
+            >
                 {point.properties.name}
             </Link>
         </View>

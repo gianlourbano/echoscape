@@ -7,6 +7,9 @@ import { getZoomLevel } from "../map/mapUtils";
 import { LatLng } from "react-native-maps";
 
 /*
+takes in input a bounding box, fetches overpass and
+returns POIs in that area
+
 https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
 
 Bounding box clauses always start with the lowest latitude (southernmost) followed by lowest longitude (westernmost), then highest latitude (northernmost) then highest longitude (easternmost). Note that this is different from the ordering in the XAPI syntax. 
@@ -88,7 +91,6 @@ export function createOverpassPathQuery(path: number[][] | LatLng[], radius = 10
         `;
     });
 
-    // Chiude la query
     query += ');out body;';
     
     console.log("richiesta a overpass: ", query)
@@ -97,10 +99,13 @@ export function createOverpassPathQuery(path: number[][] | LatLng[], radius = 10
 }
 
 
-// Funzione per inviare la richiesta ad Overpass API
+/*
+sends to overpass the query in input
+returns a promise which in turn becomes overpass response
+*/
 export async function fetchOverpass(query) {
     try {
-        const response = await fetch("https://overpass-api.de/api/interpreter", {
+        const response = await fetch(process.env.EXPO_PUBLIC_OVERPASS_API_URL, {
             method: "POST",
             body: query,
             headers: {
@@ -109,7 +114,7 @@ export async function fetchOverpass(query) {
         });
 
         const data = await response.json();
-        //console.log(data); // Stampa i dati ottenuti dalla richiesta
+        //console.log(data); 
         return data;
     } catch (error) {
         console.error("Errore nella richiesta Overpass:", error);
@@ -234,10 +239,13 @@ export const usePOIs = (region: Region) => {
                     node
                     ["historic"~"."]
                     ["name"];
-                    
                 
-                out geom;
+                
+                out tags geom;
             `),
+            headers: {
+                'User-Agent': 'university-project-echoscape (liam.busnelliurso@studio.unibo.it)'
+            }
             })
                 .then((res) => res.json())
                 .then((data) => data.elements)
@@ -299,3 +307,44 @@ export const usePOIs = (region: Region) => {
         isLoading: isMutating,
     };
 };
+
+
+/*
+fetches wikipedia image from wikidata
+the id given in input should be the wikidata id, usually starting with a "Q"
+little tutorial: https://codingtechroom.com/question/how-to-retrieve-image-urls-from-wikidata-items-using-the-api
+*/
+export async function fetchWikidataImage(id: string): Promise<any | null>{
+    const wikidataURL = `https://query.wikidata.org/sparql`
+    const query = `SELECT ?image WHERE {{ wd:${id} wdt:P18 ?image. }}`
+    const params = new URLSearchParams({
+        query: query,
+        format: 'json',
+    })
+    try {
+        const response = await fetch(
+            `${wikidataURL}?${params.toString()}`,
+            {
+                headers: {
+                    'User-Agent': 'university-project-echoscape (liam.busnelliurso@studio.unibo.it)'
+                }
+            })
+        if (response.status === 200) {
+            const data = await response.json()
+            if (data.results.bindings.length > 0) {
+                return data.results.bindings[0].image.value
+            } 
+            else {
+                return null
+            }
+        } 
+        else {
+            console.error(`[fetchWikidataImage] error (response ${response.status}) while fetching image from id ${id}: ${response.text} `)
+            return null
+        }
+    } 
+    catch (error) {
+        console.log(`[fetchWikidataImage] error while fetching image from id ${id}: ${error}`)
+        return null
+    }
+}

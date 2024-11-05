@@ -181,7 +181,7 @@ const DirectionsSelector = (
             justifyContent: 'center',
             width: '100%',
         },
-    
+
     });
 
 
