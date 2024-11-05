@@ -210,7 +210,9 @@ export default function SongPage() {
 
                         <View className="flex flex-col gap-2 p-4">
                             {data.tags.orderedInstrument.map((inst) => (
-                                <View className="flex flex-row-reverse gap-2 w-full">
+                                <View className="flex flex-row-reverse gap-2 w-full"
+                                    key={inst.x}
+                                >
                                     <View
                                         style={{ width: `${inst.y * 100}%` }}
                                         className="bg-green-600 px-4 py-1 rounded-md h-6"
@@ -228,7 +230,9 @@ export default function SongPage() {
 
                         <View className="flex flex-col gap-2 p-4">
                             {data.tags.orderedMood.map((mood) => (
-                                <View className="flex flex-row gap-2 w-full">
+                                <View className="flex flex-row gap-2 w-full"
+                                    key={mood.x}
+                                >
                                     <View
                                         style={{ width: `${mood.y * 100}%` }}
                                         className="bg-green-600 px-4 py-1 rounded-md h-6"

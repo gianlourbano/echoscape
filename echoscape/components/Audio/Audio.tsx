@@ -63,7 +63,7 @@ export const Audio = ({ index, name, refresh }: AudioProps) => {
         }
     }, []);
 
-    const playSound = usePlaySound(getProgress);
+    const {playSound} = usePlaySound(getProgress);
 
     const [date, time] = extractDate(extractFileName(name));
 
