@@ -7,18 +7,21 @@ import { SQLiteProvider, type SQLiteDatabase } from "expo-sqlite";
 import { NetworkProvider } from "@/utils/network/NetworkProvider";
 import { SWRConfig } from "swr";
 import { useEffect } from "react";
-import * as TaskManager from 'expo-task-manager';
+import * as TaskManager from "expo-task-manager";
 import { AppState } from "react-native";
 import { setNotificationHandler } from "expo-notifications";
-import { sendNotification, setNotificationsHandler } from "@/utils/notifications/manageNotifications";
-import NetInfo from '@react-native-community/netinfo';
+import {
+    sendNotification,
+    setNotificationsHandler,
+} from "@/utils/notifications/manageNotifications";
+import NetInfo from "@react-native-community/netinfo";
 import { AudioData, getToBeUploadedAudioData } from "@/utils/sql/sql";
 import { uploadAudio } from "@/utils/tasks/audioUpload";
 import { simpleDebounce } from "@/utils/utils";
 
 import { SplashScreen } from "expo-router";
 
-SplashScreen.preventAutoHideAsync()
+SplashScreen.preventAutoHideAsync();
 
 // assign this value to true if you want to disable all console.debug
 if (false) {
@@ -26,41 +29,50 @@ if (false) {
 }
 
 export default function RootLayout() {
-    
     useEffect(() => {
         // notifications
-        setNotificationsHandler()
+        setNotificationsHandler();
 
         //debug
         AppState.addEventListener("change", () => {
-            console.log("app state changed! : ", AppState.currentState)
+            console.log("app state changed! : ", AppState.currentState);
         });
-
 
         /*
         upload audios when eventually connection is available
         */
-        NetInfo.addEventListener(simpleDebounce( async state => {
-            
-            console.log(`[network listener] state.type: ${state.type}, state.isConnected: ${state.isConnected} `)
-            
-            sendNotification({title: "netInfo event listener", body: `connection type ${state.type}, is connected ${state.isConnected}`})
-            if (state.isConnected) {
-                sendNotification({title: "uploading audios", body: "unified notification for audio upload"})
-                const toBeUploadedAudios: AudioData[] = await getToBeUploadedAudioData()
-                
-                console.log(`[network listener] toBeUploadedAudios (length ${toBeUploadedAudios.length}) ${toBeUploadedAudios}`)
-                
-                toBeUploadedAudios.forEach((item) => {
-                    console.log(`attempting to upload ${item.uri}...`)
-                    uploadAudio(item.uri)
-                })
-            }
-        }, 5000))
+        NetInfo.addEventListener(
+            simpleDebounce(async (state) => {
+                console.log(
+                    `[network listener] state.type: ${state.type}, state.isConnected: ${state.isConnected} `
+                );
 
-        console.log("root layout mounted")
-            
-    }, [])
+                sendNotification({
+                    title: "netInfo event listener",
+                    body: `connection type ${state.type}, is connected ${state.isConnected}`,
+                });
+                if (state.isConnected) {
+                    sendNotification({
+                        title: "uploading audios",
+                        body: "unified notification for audio upload",
+                    });
+                    const toBeUploadedAudios: AudioData[] =
+                        await getToBeUploadedAudioData();
+
+                    console.log(
+                        `[network listener] toBeUploadedAudios (length ${toBeUploadedAudios.length}) ${toBeUploadedAudios}`
+                    );
+
+                    toBeUploadedAudios.forEach((item) => {
+                        console.log(`attempting to upload ${item.uri}...`);
+                        uploadAudio(item.uri);
+                    });
+                }
+            }, 5000)
+        );
+
+        console.log("root layout mounted");
+    }, []);
 
     return (
         <SWRConfig
@@ -119,9 +131,17 @@ async function migrateDbIfNeeded(db: SQLiteDatabase) {
     if (currentDbVersion === 0) {
         await db.execAsync(`
   PRAGMA journal_mode = 'wal';
-  CREATE TABLE audios (id INTEGER PRIMARY KEY NOT NULL, user TEXT NOT NULL, uri TEXT NOT NULL, uploaded BOOLEAN NOT NULL DEFAULT 0, backendData TEXT);
+  CREATE TABLE audios (id INTEGER PRIMARY KEY NOT NULL, user TEXT NOT NULL, uri TEXT NOT NULL, uploaded BOOLEAN NOT NULL DEFAULT 0, backendData TEXT, backend_id NUMBER DEFAULT NULL);
   `);
         currentDbVersion = 1;
     }
+    if (currentDbVersion === 1) {
+        await db.execAsync(`
+            PRAGMA journal_mode = 'wal';
+            ALTER TABLE audios ADD COLUMN backend_id NUMBER DEFAULT NULL;
+            `);
+        currentDbVersion = 2;
+    }
+
     await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
