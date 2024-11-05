@@ -289,7 +289,7 @@ export const usePOIs = (region: Region) => {
         ) {
             // console.log("DEBUG USEPOIS: ", hasBBoxChangedSignificantly(oldBBox.current, newBBox), zoomLevel)
             //console.log("DEBUG USEPOIS oldbbox: ", oldBBox.current)
-            //return;
+            return;
         }
         else {
             console.debug(

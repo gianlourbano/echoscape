@@ -1,6 +1,7 @@
+import { POIDetailsObjToURL } from "@/app/(home)/poi/[poi]";
 import SuperclusterClass from "@/utils/markers/supercluster";
 import SuperclusterNS from "@/utils/markers/types";
-import { Link } from "expo-router";
+import { Href, Link } from "expo-router";
 import { useState } from "react";
 import { View, StyleSheet, Text } from "react-native";
 import { Callout, Marker } from "react-native-maps";
@@ -85,13 +86,14 @@ function POIMarkerCallout({ point }: MarkerProps) {
         <View className="w-56 flex flex-row gap-2 items-center justify-center" key={point.properties.id}>
             <Icon source={"bookshelf"} size={30} color="black" />
             <Link 
-                href={`/poi/${
-                    point.properties.wikidata
-                        ? point.properties.wikidata.startsWith('https://www.wikidata.org/wiki/')
-                            ? point.properties.wikidata.slice(30)
-                            : point.properties.wikidata
-                        : ''
-                }`}
+                href={POIDetailsObjToURL({
+                    poi: point.properties.id,
+                    name: point.properties.name,
+                    wikidata: point.properties.wikidata,
+                    wikipedia: point.properties.wikipedia,
+                    latitude: point.properties.latitude,
+                    longitude: point.properties.longitude,
+                }) as unknown as Href<string>}
                 key={point.properties.id} 
                 className=" text-center max-w-40"
             >

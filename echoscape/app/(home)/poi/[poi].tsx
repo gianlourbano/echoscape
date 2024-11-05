@@ -15,7 +15,28 @@ export type POIDetailsPageProps = {
 }
 
 export function POIDetailsObjToURL(poi: POIDetailsPageProps): string {
-    return `/poi/${poi.poi}`;
+    const wikidataId = poi.wikidata
+        ? poi.wikidata.startsWith('https://www.wikidata.org/wiki/')
+            ? poi.wikidata.slice(30)
+            : poi.wikidata
+        : poi.poi; // Fallback to 'poi.poi' if 'wikidata' is not available
+
+    let url = `/poi/${poi.poi}`;
+
+    const params = new URLSearchParams();
+
+    if (poi.name) params.append('name', poi.name);
+    if (poi.wikipedia) params.append('wikipedia', poi.wikipedia);
+    if (poi.latitude) params.append('latitude', poi.latitude);
+    if (poi.longitude) params.append('longitude', poi.longitude);
+    if (poi.songs) params.append('songs', poi.songs);
+
+    const queryString = params.toString();
+    if (queryString) {
+        url += `?${queryString}`;
+    }
+
+    return url;
 }
 
 export default function POIDetailsPage({}) {
