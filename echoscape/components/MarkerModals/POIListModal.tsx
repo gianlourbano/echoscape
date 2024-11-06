@@ -32,7 +32,14 @@ const POIListModal: React.FC<POIListModalProps> = ({ visible, onClose, data }) =
                     <Card.Content>
                         <View style={styles.header}>
                             <Text style={styles.title}>Points of Interest</Text>
-                            <Button onPress={onClose}>Close</Button>
+                            <Button 
+                                onPress={onClose} 
+                                theme={{
+                                    colors: {
+                                        primary: "#22c55e",
+                                        text: "#22c55e",
+                                    }
+                                }}>Close</Button>
                         </View>
                         <FlatList
                             data={data}
@@ -49,7 +56,7 @@ const POIListModal: React.FC<POIListModalProps> = ({ visible, onClose, data }) =
 
 const styles = StyleSheet.create({
     modal: {
-        backgroundColor: 'white',
+        backgroundColor: '#374151',
         padding: 20,
         margin: 20,
         borderRadius: 10,

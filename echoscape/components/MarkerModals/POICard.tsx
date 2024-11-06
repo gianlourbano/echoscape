@@ -81,7 +81,20 @@ const POICard: React.FC<POICardProps> = ({ name, address, coordinates, recommend
             </Card.Content>
             {link && (
                 <Card.Actions>
-                    <Button onPress={() => Linking.openURL(link)}>Visit Link</Button>
+                    <Button 
+                        onPress={() => Linking.openURL(link)}
+                        theme={{
+                            colors: {
+                                primary: "#22c55e",
+                                outline: "#22c55e",
+                            }
+                        }}
+                        // style={{ sets background button color
+                        //     backgroundColor: "#FFFFFF"
+                        // }}
+                    >
+                        Visit Link
+                    </Button>
                 </Card.Actions>
             )}
         </Card>
@@ -109,7 +122,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#0f0f0f',
     },
     recommendedCard: {
-        borderColor: '#ff0000', 
+        borderColor: '#22c55e', 
         borderWidth: 5, 
     },
     icon: {
