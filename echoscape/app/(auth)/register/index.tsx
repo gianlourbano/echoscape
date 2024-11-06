@@ -1,4 +1,3 @@
-// echoscape/app/register/index.tsx
 
 import React, { useState } from "react";
 import { View, Image } from "react-native";

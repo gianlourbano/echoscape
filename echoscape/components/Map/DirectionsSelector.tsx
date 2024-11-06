@@ -1,235 +1,238 @@
+
 import { getRouteNodes, matchPOIsToNodes } from '@/utils/map/routes';
 import { createOverpassPathQuery, fetchOverpass, getCoordinatesName } from '@/utils/overpass/request';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { LatLng } from 'react-native-maps';
-import { IconButton, Button } from 'react-native-paper';
+import { IconButton, Button, Text } from 'react-native-paper';
 import { POICardProps } from '../MarkerModals/POICard';
 import { isPOIRecommended } from '@/utils/overpass/POIsAudios_Associations';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const { height } = Dimensions.get('window');
-
-/* deprecated interface
 interface DirectionsSelectorProps {
-    onClose: () => void;
-    func1?: () => string;
-    func2?: () => string;
-    startingPoint?: LatLng | null;
-    endingPoint?: LatLng | null;
-}*/
-
-interface DirectionsSelectorProps {
-    onClose: () => void;
-    onMapPressEventCoords: LatLng | null;
-    onRouteCompute: (coords: LatLng[]) => void;  //receives route nodes
-    onPOIsFetch: (POIs: POICardProps[]) => void;  //receives already formatted data for POI cards
-    setDirectionsMarkers?: Dispatch<SetStateAction<({startingPoint: LatLng | null, endingPoint: LatLng | null})>>    //setstate function from useState to show start and end point on the map
-    defaultEndingPoint?: LatLng | null; //if given and not null, the directions menu will open using this point as the starting point
+  onClose: () => void;
+  onMapPressEventCoords: LatLng | null;
+  onRouteCompute: (coords: LatLng[]) => void;
+  onPOIsFetch: (POICardProps: POICardProps[]) => void;
+  setDirectionsMarkers?: Dispatch<
+    SetStateAction<{ startingPoint: LatLng | null; endingPoint: LatLng | null }>
+  >;
+  defaultEndingPoint?: LatLng | null;
 }
 
-const DirectionsSelector = (
-    { onClose, onMapPressEventCoords, onRouteCompute, onPOIsFetch, setDirectionsMarkers, defaultEndingPoint }: DirectionsSelectorProps) => {    
-    
-    const [componentHeight, setComponentHeight] = useState<number>(0);
+const DirectionsSelector = ({
+  onClose,
+  onMapPressEventCoords,
+  onRouteCompute,
+  onPOIsFetch,
+  setDirectionsMarkers,
+  defaultEndingPoint,
+}: DirectionsSelectorProps) => {
+  const [button1Text, setButton1Text] = useState<string>('Start');
+  const [button2Text, setButton2Text] = useState<string>('Destination');
 
-    const [button1Text, setButton1Text] = useState<string>('Start');
-    const [button2Text, setButton2Text] = useState<string>('Destination');
+  const [selectingStartPoint, setSelectingStartPoint] = useState<boolean>(false);
+  const [selectingEndPoint, setSelectingEndPoint] = useState<boolean>(false);
 
-    const [selectingStartPoint, setSelectingStartPoint] = useState<boolean>(false)
-    const [selectingEndPoint, setSelectingEndPoint] = useState<boolean>(false)
+  const [startPoint, setStartPoint] = useState<LatLng | null>(null);
+  const [endPoint, setEndPoint] = useState<LatLng | null>(null);
 
-    const [startPoint, setStartPoint] = useState<LatLng | null>(null)
-    const [endPoint, setEndPoint] = useState<LatLng | null>(null)
-
-    useEffect(() => {
-        /*
-        set component height to occupy only the top of the page
-        */
-        const { height } = Dimensions.get('window');
-        const componentHeight = height / 5;
-        setComponentHeight(componentHeight);
-
-        /*
-        if a starting point was selected before opening the menu: 
-            - set it as the starting point
-            - toggle end point selection
-        */
-        (async () => {
-            if (defaultEndingPoint) {
-                handleEndPointChange(defaultEndingPoint) 
-                setButton2Text(await getCoordinatesName(defaultEndingPoint))
-            }
-            console.log(`[directionsSelector] default ending point ${defaultEndingPoint ? `selected: latitude: ${defaultEndingPoint.latitude} longitude: ${defaultEndingPoint.longitude} ` : "not selected"}`)
-        })()
-    }, []);
-
-    /*
-    onMapPressEventCoords gets changed everytime the user presses on the map.
-    if this component is waiting for a press, i.e. to select the destination, the destination will be updated
-    else, the event will be ignored
-    */
-    useEffect(() => {
-        if (selectingStartPoint) handleStartPointChange(onMapPressEventCoords);
-        if (selectingEndPoint) handleEndPointChange(onMapPressEventCoords);
-        /*
-        fetch name of the points, to put names instead of coordinates in the buttons
-        */
-       (async () => {            
-            //fetch name of selected points
-            console.log("[directionsSelector]map pressed on coords: ", onMapPressEventCoords, " name: ", await getCoordinatesName(onMapPressEventCoords))
-            if (selectingStartPoint) setButton1Text(await getCoordinatesName(onMapPressEventCoords))
-            if (selectingEndPoint)   setButton2Text(await getCoordinatesName(onMapPressEventCoords))
-        })()
-        setSelectingStartPoint(false)
-        setSelectingEndPoint(false)
-
-    }, [onMapPressEventCoords])
-
-
-
-
-
-    function handleStartPointChange(newStartPoint: LatLng) {
-        setStartPoint(newStartPoint)
-        setDirectionsMarkers(prev => ({ ...prev, startingPoint: newStartPoint }))
+  useEffect(() => {
+    if (defaultEndingPoint) {
+      handleEndPointChange(defaultEndingPoint);
+      getCoordinatesName(defaultEndingPoint).then(setButton2Text);
     }
+  }, []);
 
-    function handleEndPointChange(newEndPoint: LatLng) {
-        setEndPoint(newEndPoint)
-        setDirectionsMarkers(prev => ({...prev, endingPoint: newEndPoint}))
+  useEffect(() => {
+    if (selectingStartPoint && onMapPressEventCoords) {
+      handleStartPointChange(onMapPressEventCoords);
+      getCoordinatesName(onMapPressEventCoords).then(setButton1Text);
+      setSelectingStartPoint(false);
     }
-
-    function handleStartButtonPress() {
-        console.log("start button pressed!")
-        if (selectingEndPoint && !selectingStartPoint) setSelectingEndPoint(false)
-        setSelectingStartPoint(prev => !prev)
+    if (selectingEndPoint && onMapPressEventCoords) {
+      handleEndPointChange(onMapPressEventCoords);
+      getCoordinatesName(onMapPressEventCoords).then(setButton2Text);
+      setSelectingEndPoint(false);
     }
+  }, [onMapPressEventCoords]);
 
-    function handleEndButtonPress() {
-        console.log("end button pressed!")
-        if (selectingStartPoint && !selectingEndPoint) setSelectingStartPoint(false)
-        setSelectingEndPoint(prev => !prev)
-    }
+  function handleStartPointChange(newStartPoint: LatLng) {
+    setStartPoint(newStartPoint);
+    setDirectionsMarkers?.((prev) => ({ ...prev, startingPoint: newStartPoint }));
+  }
 
-    async function handleGetDirectionsButtonPress() {
-        if (!startPoint || !endPoint) return;
+  function handleEndPointChange(newEndPoint: LatLng) {
+    setEndPoint(newEndPoint);
+    setDirectionsMarkers?.((prev) => ({ ...prev, endingPoint: newEndPoint }));
+  }
 
-        const route = await getRouteNodes(startPoint.latitude, startPoint.longitude, endPoint.latitude, endPoint.longitude)
-        onRouteCompute(route)
+  function handleStartButtonPress() {
+    if (selectingEndPoint) setSelectingEndPoint(false);
+    setSelectingStartPoint((prev) => !prev);
+  }
 
-        const overpassResponse = await fetchOverpass(createOverpassPathQuery(route))
-        console.log("[directionsSelector DEBUG] POIs in route: ", (overpassResponse).elements.map(element => element.tags.name), "addresses: ", (overpassResponse).elements.map(element => element))
-        //warning: long log - console.log("[directionsSelector] route computed (should be displayed as a polyline on the map: ", route)
+  function handleEndButtonPress() {
+    if (selectingStartPoint) setSelectingStartPoint(false);
+    setSelectingEndPoint((prev) => !prev);
+  }
 
-        //cast to POIcardProps type
-        const POICardsInfo = await Promise.all(overpassResponse.elements.map(async (element) => {
-            const poiRecommendation = await isPOIRecommended({latitude: element.lat, longitude: element.lon})
-            const cardInfo: POICardProps = {
-                name: element.tags.name,
-                address: element.tags["addr:street"],
-                coordinates: {latitude: element.lat, longitude: element.lon},
-                recommended: poiRecommendation,
-                link: element.tags.wikipedia ? `https://it.wikipedia.org/wiki/${element.tags.wikipedia}` : null,
-                additionalInfo: [
-                    {label: "recommended", value: poiRecommendation ? "yes" : "no"}
-                ]
-            };
+  function handleSwapButtonPress() {
+    const startPointValue = startPoint
+    const endPointValue = endPoint
+    setStartPoint(endPointValue)
+    setEndPoint(startPointValue)
 
-            return cardInfo
-        }))
-        onPOIsFetch(POICardsInfo)
+    const button1TextValue = button1Text
+    const button2TextValue = button2Text
+    setButton1Text(button2Text)
+    setButton2Text(button1Text)
+  }
 
-    }
+  async function handleGetDirectionsButtonPress() {
+    if (!startPoint || !endPoint) return;
 
-    const styles = StyleSheet.create({
-        container: {
-            flexDirection: 'row',
-            width: '100%',
-            backgroundColor: '#f5f5f5',
-            padding: 10,
-        },
-        leftColumn: {
-            width: '10%', // Spazio per la croce
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-        },
-        centerColumn: {
-            width: '80%',
-            justifyContent: 'center',
-        },
-        rightColumn: {
-            width: '10%', // Spazio per il bottone
-            justifyContent: 'center',
-            alignContent: 'center',
-        },
-        buttonRow: {
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 10,
-        },
-        buttonListening: {
-            backgroundColor: 'green',  // Bottone attivato
-            borderRadius: 5,
-        },
-        buttonInactive: {
-            backgroundColor: 'gray',  // Bottone disattivato
-            borderRadius: 5,
-        },
-        buttonContentStyle: {
-            flexDirection: 'row',
-            justifyContent: 'center',
-            width: '100%',
-        },
-
-    });
-
-
-    return (
-        <SafeAreaView style={styles.container}>
-            {/* close button */}
-            <View style={styles.leftColumn}>
-                <IconButton icon="close" size={24} onPress={onClose} />
-            </View>
-
-            {/* map buttons */}
-            <View style={styles.centerColumn}>
-                <View style={styles.buttonRow}>
-                    <IconButton icon="ray-start-arrow" size={24} />
-                    <Button
-                        mode={selectingStartPoint ? "contained" : "outlined"}
-                        onPress={handleStartButtonPress}
-                        style={[selectingStartPoint ? styles.buttonListening : styles.buttonInactive, { flex: 1 }]}
-                        contentStyle={styles.buttonContentStyle}
-                    >
-                        {button1Text}
-                    </Button>
-                </View>
-                <View style={styles.buttonRow}>
-                    <IconButton icon="ray-end" size={24} />
-                    <Button
-                        mode="outlined"
-                        onPress={handleEndButtonPress}
-                        style={[selectingEndPoint ? styles.buttonListening : styles.buttonInactive, { flex: 1 }]}
-                        contentStyle={styles.buttonContentStyle}
-                    >
-                        {button2Text}
-                    </Button>
-                </View>
-            </View>
-
-            {/* route computation button */}
-            <View style={styles.rightColumn}>
-                <Button 
-                    mode="text" 
-                    onPress={handleGetDirectionsButtonPress}
-                    disabled={!startPoint || !endPoint}
-                >
-                    <IconButton icon="map-marker-right-outline" iconColor={!startPoint || !endPoint ? 'grey' : 'black'}/>
-                </Button>
-            </View>
-        </SafeAreaView>
+    const route = await getRouteNodes(
+      startPoint.latitude,
+      startPoint.longitude,
+      endPoint.latitude,
+      endPoint.longitude
     );
+    onRouteCompute(route);
+
+    const overpassResponse = await fetchOverpass(createOverpassPathQuery(route));
+    const POICardsInfo = await Promise.all(
+      overpassResponse.elements.map(async (element) => {
+        const poiRecommendation = await isPOIRecommended({
+          latitude: element.lat,
+          longitude: element.lon,
+        });
+        const cardInfo: POICardProps = {
+          name: element.tags.name,
+          address: element.tags['addr:street'],
+          coordinates: { latitude: element.lat, longitude: element.lon },
+          recommended: poiRecommendation,
+          link: element.tags.wikipedia
+            ? `https://it.wikipedia.org/wiki/${element.tags.wikipedia}`
+            : null,
+          additionalInfo: [{ label: 'recommended', value: poiRecommendation ? 'yes' : 'no' }],
+        };
+
+        return cardInfo;
+      })
+    );
+    onPOIsFetch(POICardsInfo);
+  }
+
+  // Stili
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      width: '100%',
+      backgroundColor: '#374151', // Tailwind class bg-zinc-700
+      padding: 10,
+      alignItems: 'center',
+    },
+    leftColumn: {
+      width: '20%', // Aumentato per ospitare due bottoni
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    centerColumn: {
+      width: '70%', // Ridotto per bilanciare lo spazio
+      justifyContent: 'center',
+    },
+    rightColumn: {
+      width: '10%',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 10,
+    },
+    button: {
+      flex: 1,
+      marginLeft: 5,
+    },
+    buttonListening: {
+      backgroundColor: '#22c55e', // Tailwind class text-green-600
+    },
+    buttonInactive: {
+      backgroundColor: '#4B5563', // Tailwind class bg-gray-600
+    },
+    buttonText: {
+      color: '#FFFFFF', // Testo bianco
+      fontSize: 16,
+      textTransform: 'none',
+    },
+    icon: {
+      marginRight: 5,
+    },
+  });
+
+  return (
+    <SafeAreaView style={styles.container}>
+      {/* Colonna sinistra con i bottoni */}
+      <View style={styles.leftColumn}>
+        {/* Bottone Close */}
+        <IconButton
+          icon="close"
+          size={24}
+          onPress={onClose}
+          iconColor="#FFFFFF"
+        />
+        {/* invert buttons */}
+        <IconButton
+          icon="swap-vertical"
+          size={24}
+          onPress={handleSwapButtonPress}
+          iconColor="#FFFFFF"
+        />
+      </View>
+
+      {/* Bottoni per la Mappa */}
+      <View style={styles.centerColumn}>
+        <View style={styles.buttonRow}>
+          <IconButton icon="ray-start-arrow" size={24} iconColor="#FFFFFF" />
+          <Button
+            mode={selectingStartPoint ? 'contained' : 'outlined'}
+            onPress={handleStartButtonPress}
+            style={[styles.button, selectingStartPoint ? styles.buttonListening : styles.buttonInactive]}
+            labelStyle={styles.buttonText}
+            contentStyle={{ paddingVertical: 5 }}
+          >
+            {button1Text}
+          </Button>
+        </View>
+        <View style={styles.buttonRow}>
+          <IconButton icon="ray-end" size={24} iconColor="#FFFFFF" />
+          <Button
+            mode={selectingEndPoint ? 'contained' : 'outlined'}
+            onPress={handleEndButtonPress}
+            style={[styles.button, selectingEndPoint ? styles.buttonListening : styles.buttonInactive]}
+            labelStyle={styles.buttonText}
+            contentStyle={{ paddingVertical: 5 }}
+          >
+            {button2Text}
+          </Button>
+        </View>
+      </View>
+
+      {/* Bottone per calcolare il percorso */}
+      <View style={styles.rightColumn}>
+        <Button onPress={handleGetDirectionsButtonPress} disabled={!startPoint || !endPoint}>
+          <IconButton
+            icon="map-marker-right-outline"
+            size={24}
+            iconColor={!startPoint || !endPoint ? '#6B7280' : '#22c55e'}
+          />
+        </Button>
+      </View>
+    </SafeAreaView>
+  );
 };
 
 export default DirectionsSelector;
