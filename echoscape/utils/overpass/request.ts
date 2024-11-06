@@ -15,13 +15,14 @@ https://wiki.openstreetmap.org/wiki/Overpass_API/Language_Guide
 Bounding box clauses always start with the lowest latitude (southernmost) followed by lowest longitude (westernmost), then highest latitude (northernmost) then highest longitude (easternmost). Note that this is different from the ordering in the XAPI syntax. 
 */
 export async function sendOverpassRequest(
-    bbox: 
-        {minLat: number, minLon: number, maxLat: number, maxLon: number},
-    timeout: number = 10,
-    ) {
-    console.info("richiesta a overpass")
+    bbox: { minLat: number; minLon: number; maxLat: number; maxLon: number },
+    timeout: number = 10
+) {
+    console.info("richiesta a overpass");
 
-    const body = "data="+ encodeURIComponent(`
+    const body =
+        "data=" +
+        encodeURIComponent(`
                 [bbox:${bbox.minLat},${bbox.minLon},${bbox.maxLat},${bbox.maxLon}]
                 [out:json]
                 [timeout:${timeout}]
@@ -33,19 +34,14 @@ export async function sendOverpassRequest(
                     
                 
                 out geom;
-            `)
-    var result = await fetch(
-        process.env.EXPO_PUBLIC_OVERPASS_API_URL,
-        {
-            method: "POST",
-            // The body contains the query
-            // to understand the query language see "The Programmatic Query Language" on
-            // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
-            body: body
-        },
-    ).then(
-        (data)=>data.json()
-    )
+            `);
+    var result = await fetch(process.env.EXPO_PUBLIC_OVERPASS_API_URL, {
+        method: "POST",
+        // The body contains the query
+        // to understand the query language see "The Programmatic Query Language" on
+        // https://wiki.openstreetmap.org/wiki/Overpass_API#The_Programmatic_Query_Language_(OverpassQL)
+        body: body,
+    }).then((data) => data.json());
 
     //console.info("risposta di overpass: ", result.elements)
 
@@ -53,8 +49,6 @@ export async function sendOverpassRequest(
 
     return result.elements;
 }
-
-
 
 /*
 takes in input an array
@@ -71,33 +65,36 @@ takes in input a path, as an array of coordinates:
 makes the request to overpass API
 returns the list of POIs down that route
 */
-export function createOverpassPathQuery(path: number[][] | LatLng[], radius = 100) {
-    let query = '[out:json];(';
+export function createOverpassPathQuery(
+    path: number[][] | LatLng[],
+    radius = 100
+) {
+    let query = "[out:json];(";
 
-    const pathCopy = (path.length > 10 ? pickOneSkipTwo(path) : path)
-                    .map((element: [number, number] | LatLng) => {
-                        //checks if the array is formed by
-                        if (Array.isArray(element)) {
-                            return element as [number, number];
-                        } else {
-                            const latLng = element as LatLng;
-                            return [latLng.longitude, latLng.latitude];
-                        }
-                    })
-    
+    const pathCopy = (path.length > 10 ? pickOneSkipTwo(path) : path).map(
+        (element: [number, number] | LatLng) => {
+            //checks if the array is formed by
+            if (Array.isArray(element)) {
+                return element as [number, number];
+            } else {
+                const latLng = element as LatLng;
+                return [latLng.longitude, latLng.latitude];
+            }
+        }
+    );
+
     pathCopy.forEach(([lon, lat]) => {
         query += `
         node["historic"~"."]["name"](around:${radius}, ${lat}, ${lon});
         `;
     });
 
-    query += ');out body;';
-    
-    console.log("richiesta a overpass: ", query)
+    query += ");out body;";
+
+    console.log("richiesta a overpass: ", query);
 
     return query;
 }
-
 
 /*
 sends to overpass the query in input
@@ -109,12 +106,12 @@ export async function fetchOverpass(query) {
             method: "POST",
             body: query,
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
         });
 
         const data = await response.json();
-        //console.log(data); 
+        //console.log(data);
         return data;
     } catch (error) {
         console.error("Errore nella richiesta Overpass:", error);
@@ -134,17 +131,17 @@ const calculateOverlapIndex = (bbox1: BBox, bbox2: BBox): number => {
 
     // no overlap: return 0
     if (left1 >= right2 || left2 >= right1) {
-        return 0
+        return 0;
     }
     if (bottom1 >= top2 || bottom2 >= top1) {
-        return 0
+        return 0;
     }
 
     // intersection borders
     const interLeft = Math.max(
         Math.min(right1, left2),
         Math.min(left1, right2)
-    )
+    );
     const interRight = Math.min(
         Math.max(right1, left2),
         Math.max(left1, right2)
@@ -153,10 +150,7 @@ const calculateOverlapIndex = (bbox1: BBox, bbox2: BBox): number => {
         Math.min(top1, bottom2),
         Math.min(bottom1, top2)
     );
-    const interTop = Math.min(
-        Math.max(top1, bottom2),
-        Math.max(bottom1, top2)
-    );
+    const interTop = Math.min(Math.max(top1, bottom2), Math.max(bottom1, top2));
 
     // intersection area
     const interWidth = Math.abs(interRight - interLeft);
@@ -169,12 +163,11 @@ const calculateOverlapIndex = (bbox1: BBox, bbox2: BBox): number => {
     const unionArea = area1 + area2 - interArea;
 
     return unionArea === 0 ? 0 : interArea / unionArea;
-  };
-  
+};
 
 const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.2) => {
     if (!prevBBox) return true;
-/*
+    /*
     const latDiff =
         Math.abs(prevBBox[3] - newBBox[3]) / Math.abs(prevBBox[3]);
     const lonDiff =
@@ -184,26 +177,34 @@ const hasBBoxChangedSignificantly = (prevBBox, newBBox, threshold = 0.2) => {
 
     return latDiff > threshold || lonDiff > threshold;
 */
-    const overlapIndex = calculateOverlapIndex(prevBBox, newBBox)
+    const overlapIndex = calculateOverlapIndex(prevBBox, newBBox);
 
-    return overlapIndex < threshold
+    return overlapIndex < threshold;
 };
 
-export async function getCoordinatesName(coords: LatLng | null): Promise<string> {
+export async function getCoordinatesName(
+    coords: LatLng | null
+): Promise<string> {
     if (!coords) return "";
     const latitude = coords.latitude;
     const longitude = coords.longitude;
     try {
-        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`, {
-            headers: {
-                'User-Agent': 'university-project-echoscape (liam.busnelliurso@studio.unibo.it)'
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+            {
+                headers: {
+                    "User-Agent":
+                        "university-project-echoscape (liam.busnelliurso@studio.unibo.it)",
+                },
             }
-        });
+        );
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error(`Error fetching coordinates name: ${response.status} ${response.statusText}`);
-            console.error("Response body: ", errorText); 
+            console.error(
+                `Error fetching coordinates name: ${response.status} ${response.statusText}`
+            );
+            console.error("Response body: ", errorText);
             return `${latitude}, ${longitude}`;
         }
 
@@ -214,13 +215,13 @@ export async function getCoordinatesName(coords: LatLng | null): Promise<string>
             return `${latitude}, ${longitude}`;
         }
     } catch (error) {
-        console.error(`Error fetching coordinates name from (${latitude}, ${longitude}):`, error);
+        console.error(
+            `Error fetching coordinates name from (${latitude}, ${longitude}):`,
+            error
+        );
         return `${latitude}, ${longitude}`;
     }
 }
-
-
-
 
 export const usePOIs = (region: Region) => {
     const oldBBox = useRef(null);
@@ -243,9 +244,10 @@ export const usePOIs = (region: Region) => {
                 
                 out tags geom;
             `),
-            headers: {
-                'User-Agent': 'university-project-echoscape (liam.busnelliurso@studio.unibo.it)'
-            }
+                headers: {
+                    "User-Agent":
+                        "university-project-echoscape (liam.busnelliurso@studio.unibo.it)",
+                },
             })
                 .then((res) => res.json())
                 .then((data) => data.elements)
@@ -257,14 +259,11 @@ export const usePOIs = (region: Region) => {
                                 name: element.tags.name,
                                 type: "poi",
                                 id: "poi-" + index,
-                                wikidata: element.tags.wikidata
-                                    ? "https://www.wikidata.org/wiki/" +
-                                      element.tags.wikidata
-                                    : undefined,
-                                wikipedia: element.tags.wikipedia
-                                    ? "https://en.wikipedia.org/wiki/" +
-                                      element.tags.wikipedia.replace(" ", "_")
-                                    : undefined,
+                                wikidata: element.tags?.wikidata,
+                                wikipedia: element.tags?.wikipedia?.replace(
+                                    " ",
+                                    "_"
+                                ),
                             }
                         );
                     });
@@ -282,7 +281,7 @@ export const usePOIs = (region: Region) => {
         const newBBox = regionToBBox(region);
         //console.log("DEBUG USEPOIS newBbox: ", newBBox)
         const zoomLevel = getZoomLevel(region);
-        
+
         if (
             !hasBBoxChangedSignificantly(oldBBox.current, newBBox) ||
             zoomLevel < 15
@@ -297,9 +296,8 @@ export const usePOIs = (region: Region) => {
             );
             trigger(newBBox);
         }
-        
-        oldBBox.current = newBBox;
 
+        oldBBox.current = newBBox;
     }, [region]);
 
     return {
@@ -308,43 +306,42 @@ export const usePOIs = (region: Region) => {
     };
 };
 
-
 /*
 fetches wikipedia image from wikidata
 the id given in input should be the wikidata id, usually starting with a "Q"
 little tutorial: https://codingtechroom.com/question/how-to-retrieve-image-urls-from-wikidata-items-using-the-api
 */
-export async function fetchWikidataImage(id: string): Promise<any | null>{
-    const wikidataURL = `https://query.wikidata.org/sparql`
-    const query = `SELECT ?image WHERE {{ wd:${id} wdt:P18 ?image. }}`
+export async function fetchWikidataImage(id: string): Promise<any | null> {
+    const wikidataURL = `https://query.wikidata.org/sparql`;
+    const query = `SELECT ?image WHERE {{ wd:${id} wdt:P18 ?image. }}`;
     const params = new URLSearchParams({
         query: query,
-        format: 'json',
-    })
+        format: "json",
+    });
     try {
-        const response = await fetch(
-            `${wikidataURL}?${params.toString()}`,
-            {
-                headers: {
-                    'User-Agent': 'university-project-echoscape (liam.busnelliurso@studio.unibo.it)'
-                }
-            })
+        const response = await fetch(`${wikidataURL}?${params.toString()}`, {
+            headers: {
+                "User-Agent":
+                    "university-project-echoscape (liam.busnelliurso@studio.unibo.it)",
+            },
+        });
         if (response.status === 200) {
-            const data = await response.json()
+            const data = await response.json();
             if (data.results.bindings.length > 0) {
-                return data.results.bindings[0].image.value
-            } 
-            else {
-                return null
+                return data.results.bindings[0].image.value;
+            } else {
+                return null;
             }
-        } 
-        else {
-            console.error(`[fetchWikidataImage] error (response ${response.status}) while fetching image from id ${id}: ${response.text} `)
-            return null
+        } else {
+            console.error(
+                `[fetchWikidataImage] error (response ${response.status}) while fetching image from id ${id}: ${response.text} `
+            );
+            return null;
         }
-    } 
-    catch (error) {
-        console.log(`[fetchWikidataImage] error while fetching image from id ${id}: ${error}`)
-        return null
+    } catch (error) {
+        console.log(
+            `[fetchWikidataImage] error while fetching image from id ${id}: ${error}`
+        );
+        return null;
     }
 }
