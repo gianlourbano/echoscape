@@ -1,10 +1,15 @@
-import { Link } from "expo-router";
-import { useState } from "react";
-import { View, TextInput } from "react-native";
-import { Button, Text } from "react-native-paper";
+// echoscape/app/register/index.tsx
+
+import React, { useState } from "react";
+import { View, Image } from "react-native";
+import { TextInput, Button, Text } from "react-native-paper";
 import { useAuth } from "@/utils/auth/AuthProvider";
+import PageContainer from "@/components/PageContainer";
+import { useRouter } from "expo-router";
 
 const RegisterPage = () => {
+    const router = useRouter();
+
     const [username, setUsername] = useState<string>("");
     const [password, setPassword] = useState<string>("");
     const [confirmPassword, setConfirmPassword] = useState<string>("");
@@ -14,18 +19,12 @@ const RegisterPage = () => {
 
     const { dispatch } = useAuth();
 
+    const isRegisterButtonDisabled = !username || !password || !confirmPassword;
+
     const handleRegister = () => {
-        if(!username) {
-            setError("Username is required!");
-            return;
-        }
+        setError("");
 
-        if(!password) {
-            setError("Password is required!");
-            return;
-        }
-
-        if(password !== confirmPassword) {
+        if (password !== confirmPassword) {
             setError("Passwords do not match!");
             return;
         }
@@ -37,55 +36,111 @@ const RegisterPage = () => {
             },
             body: JSON.stringify({ username, password }),
         })
-            .then((res) => res.json())
-            .then((data) => {
-                console.log(JSON.stringify(data, null, 2));
-                dispatch("login", { username, password });
+            .then(async (res) => {
+                if (res.ok) {
+                    dispatch("login", { username, password });
+                } else {
+                    const data = await res.json();
+                    setError("Error: " + data.detail);
+                }
             })
             .catch((err) => {
-                console.error(JSON.stringify(err, null, 2));
+                console.log("[register page] Errore durante la registrazione: ", err);
+                setError("Error: " + err);
             });
     };
 
     return (
-        <View className="p-6 flex flex-col gap-2 bg-zinc-800 text-white h-full">
-            <Text className=" text-xl self-center">Register Page</Text>
+        <PageContainer className="bg-zinc-700 h-full flex flex-col justify-center items-center">
+            <Image
+                source={require("@/assets/image.png")}
+                style={{ width: 200, height: 200, marginBottom: 20 }}
+            />
+            <Text className="text-4xl font-bold text-green-600 mb-4">
+                Register to Echoscape
+            </Text>
 
-            <View className="flex flex-col gap-2 m-4 text-white">
-                {/* <Text>Username</Text> */}
+            <View className="w-3/4">
                 <TextInput
-                    className="rounded-md p-4 bg-gray-500 mb-4 w-full text-white placeholder:color-gray-400"
-                    inlineImageLeft="search_icon"
-                    placeholder="Username"
+                    label="Username"
+                    value={username}
                     onChangeText={setUsername}
+                    mode="outlined"
+                    style={{ backgroundColor: "#374151", marginBottom: 20 }}
+                    theme={{
+                        colors: {
+                            placeholder: "#9CA3AF",
+                            text: "#FFFFFF",
+                            primary: error ? "#e32636" : "#22c55e",
+                        },
+                    }}
                 />
-                {/* <Text>Password</Text> */}
                 <TextInput
-                    className="rounded-md p-4 bg-gray-500 mb-4 w-full placeholder:color-gray-400 text-white"
-                    placeholder="Password"
-                    secureTextEntry={!showPassword}
+                    label="Password"
+                    value={password}
                     onChangeText={setPassword}
-                />
-                {/* <Text>Confirm password</Text> */}
-                <TextInput
-                    className="rounded-md p-4 bg-gray-500 mb-4 w-full placeholder:color-gray-400 text-white"
-                    placeholder="Confirm Password"
+                    mode="outlined"
                     secureTextEntry={!showPassword}
-                    onChangeText={setConfirmPassword}
+                    style={{ backgroundColor: "#374151", marginBottom: 20 }}
+                    theme={{
+                        colors: {
+                            placeholder: "#9CA3AF",
+                            text: "#FFFFFF",
+                            primary: error ? "#e32636" : "#22c55e",
+                        },
+                    }}
                 />
+                <TextInput
+                    label="Confirm Password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    mode="outlined"
+                    secureTextEntry={!showPassword}
+                    style={{ backgroundColor: "#374151", marginBottom: 20 }}
+                    theme={{
+                        colors: {
+                            placeholder: "#9CA3AF",
+                            text: "#FFFFFF",
+                            primary: error ? "#e32636" : "#22c55e",
+                        },
+                    }}
+                />
+
+                {error && (
+                    <Text
+                        style={{
+                            color: "red",
+                            marginBottom: 10,
+                            textAlign: "center",
+                        }}
+                    >
+                        {error}
+                    </Text>
+                )}
+
+                <Button
+                    mode="contained"
+                    disabled={isRegisterButtonDisabled}
+                    onPress={handleRegister}
+                    contentStyle={{ paddingVertical: 10 }}
+                    style={{
+                        backgroundColor: isRegisterButtonDisabled ? "#9CA3AF" : "#22c55e",
+                        marginBottom: 10,
+                    }}
+                >
+                    Register
+                </Button>
+                <Button
+                    mode="text"
+                    onPress={() => {
+                        router.navigate("/login");
+                    }}
+                    labelStyle={{ color: "#FFFFFF" }}
+                >
+                    Hai già un account? <Text style={{ color: "#22c55e" }}>Login</Text>
+                </Button>
             </View>
-            <Button onPress={handleRegister}>Register</Button>
-            {error && <Text className="text-red-500">{error}</Text>}
-            <View className="flex flex-row gap-2 items-center">
-                <Text>Already have an account?</Text>
-                <Link href="/login" className="text-white" asChild>
-                    <Button>Login</Button>
-                </Link>
-            </View>
-            <Link href="/" className="text-white">
-                Go Home!
-            </Link>
-        </View>
+        </PageContainer>
     );
 };
 

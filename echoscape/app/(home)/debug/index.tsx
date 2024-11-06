@@ -13,7 +13,7 @@ import { sendNotification } from "@/utils/notifications/manageNotifications";
 import { AudioData, getToBeUploadedAudioData, getAlreadyUploadedAudioData, deleteAllAudioData } from "@/utils/sql/sql";
 import { simpleDebounce } from "@/utils/utils";
 import Collapsible from 'react-native-collapsible';
-import { createOverpassPathQuery, fetchOverpass } from "@/utils/overpass/request";
+import { createOverpassPathQuery, fetchOverpass, fetchWikidataImage } from "@/utils/overpass/request";
 import { matchPOIsToNodes } from "@/utils/map/routes";
 import { getPOIsAssociatedToPoint } from "@/utils/overpass/POIsAudios_Associations";
 
@@ -190,6 +190,16 @@ const NetworkDebug = () => {
         <DebugContainer title="Network">
             <Text>{JSON.stringify(netInfo, null, 2)}</Text>
             <Button onPress={() => refresh()}>Refresh</Button>
+            <Button onPress={(async () => {
+              const wikidataId = "Q3862652"; // Esempio di ID Wikidata
+              const imageUrl = await fetchWikidataImage(wikidataId);
+              if (imageUrl) {
+                  console.log(`URL dell'immagine: ${imageUrl}`);
+              } else {
+                  console.log("[debug]Nessuna immagine trovata o errore nel recupero.");
+              }
+          })}
+        >stampa url immagine</Button>
         </DebugContainer>
     );
 };
