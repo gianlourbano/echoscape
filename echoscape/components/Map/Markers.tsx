@@ -91,8 +91,8 @@ function POIMarkerCallout({ point }: MarkerProps) {
                     name: point.properties.name,
                     wikidata: point.properties.wikidata,
                     wikipedia: point.properties.wikipedia,
-                    latitude: point.properties.latitude,
-                    longitude: point.properties.longitude,
+                    latitude: point.geometry.coordinates[1].toString(),
+                    longitude: point.geometry.coordinates[0].toString(),
                 }) as unknown as Href<string>}
                 key={point.properties.id} 
                 className=" text-center max-w-40"
