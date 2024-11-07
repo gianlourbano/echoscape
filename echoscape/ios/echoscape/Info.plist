@@ -51,6 +51,11 @@
                 <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
                 <true/>
             </dict>
+            <key>commons.wikimedia.org</key>
+            <dict>
+                <key>NSTemporaryExceptionAllowsInsecureHTTPLoads</key>
+                <true/>
+            </dict>
         </dict>
       <key>NSAllowsArbitraryLoads</key>
       <false/>

@@ -17,7 +17,7 @@ export default function LoginPage() {
     const isLoginButtonDisabled = !username || !password;
 
     return (
-        <PageContainer className="bg-zinc-700 h-full flex flex-col justify-center items-center">
+        <PageContainer className="bg-zinc-700 h-full flex flex-col justify-center items-center" safe>
             <Image
                 source={require("@/assets/image.png")}
                 style={{ width: 200, height: 200, marginBottom: 20 }}

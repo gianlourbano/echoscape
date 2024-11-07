@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { BBox, Region } from "../markers/types";
 import { useFetch } from "@/hooks/useFetch";
 import { coordsToGeoJSONFeature, regionToBBox } from "../markers/utils";
 import useSWRMutation from "swr/mutation";
 import { getZoomLevel } from "../map/mapUtils";
 import { LatLng } from "react-native-maps";
+import useSWR from "swr";
 
 /*
 takes in input a bounding box, fetches overpass and
@@ -260,10 +261,7 @@ export const usePOIs = (region: Region) => {
                                 type: "poi",
                                 id: "poi-" + index,
                                 wikidata: element.tags?.wikidata,
-                                wikipedia: element.tags?.wikipedia?.replace(
-                                    " ",
-                                    "_"
-                                ),
+                                wikipedia: element.tags?.wikipedia || null
                             }
                         );
                     });
@@ -305,6 +303,105 @@ export const usePOIs = (region: Region) => {
         isLoading: isMutating,
     };
 };
+
+async function fetchWikipediaDescription(title: string, language="it"): Promise<string> {
+    if(!title) {
+        return "No short description available";
+    }
+
+    const url = `https://${language}.wikipedia.org/w/api.php`;
+
+    // Define the API query parameters
+    const params = new URLSearchParams({
+        action: "query",
+        format: "json",
+        prop: "extracts",
+        exintro: "true", // Get only the introduction (summary)
+        description: "true",
+        // if : is present in the title, split it and take the string after the :
+        titles: title,
+    });
+
+    // Send the request to Wikipedia API
+    const response = await fetch(`${url}?${params.toString()}`);
+
+    // Ensure the request was successful
+    if (!response.ok) {
+        throw new Error("Failed to fetch data from Wikipedia");
+    }
+
+    // Parse the response as JSON
+    const data = await response.json();
+
+    // Extract the page description (first paragraph)
+    const page = Object.values(data.query.pages)[0];
+    if (!page) {
+        return "No short description available";
+    }
+    // @ts-ignore
+    const description = (page.extract as string) || "No short description available";
+
+    return description.replace(/<[^>]*>/g, "");
+}
+
+export function useWIKI(wikidataID: string, lang: string) {
+    const [wikiurl, setWikiurl] = useState<string | null>(null);
+    const [description, setDescription] = useState<string>("No short description available");
+
+    const fetcher = useCallback(async () => {
+        if (!wikidataID) {
+            setDescription("No short description available");
+            return null;
+        }
+
+        const baseurl = "https://www.wikidata.org/w/api.php";
+
+        const params = new URLSearchParams();
+        params.append("action", "wbgetentities");
+        params.append("props", "sitelinks");
+        params.append("props", "sitelinks/urls")
+        params.append("ids", wikidataID);
+        params.append("sitefilter", lang + "wiki");
+        params.append("format", "json");
+
+        const response = await fetch(`${baseurl}?${params.toString()}`);
+        const data = await response.json();
+
+        if(data.entities) {
+
+            const wikiurl = data.entities[wikidataID].sitelinks[lang + "wiki"]?.url;
+            const title = data.entities[wikidataID].sitelinks[lang + "wiki"]?.title;
+            setWikiurl(wikiurl);
+
+            const desc = await fetchWikipediaDescription(title, lang);
+
+            setDescription(desc);
+
+            if(desc === "No short description available")
+                return "no-desc"
+
+            return "desc";
+        }
+
+        return null;
+
+    }, [wikidataID, lang]);
+
+    const { data, isLoading } = useSWR("wikidata", fetcher, {
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        revalidateOnMount: true,
+        refreshInterval: 0,
+    });
+
+    return {
+        status: data,
+        wikiurl,
+        description,
+        isLoading,
+    };
+
+}
 
 /*
 fetches wikipedia image from wikidata

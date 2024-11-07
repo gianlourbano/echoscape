@@ -116,7 +116,7 @@ export default function SongPage() {
     );
 
     if(isLoading) {
-        return <Text>Loading...</Text>
+        return <View className="h-full bg-zinc-700"></View>
     }
 
     if(error) {
