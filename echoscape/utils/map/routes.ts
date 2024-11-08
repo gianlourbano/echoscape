@@ -57,7 +57,7 @@ export async function getRouteNodes(startLat: number, startLng: number, endLat: 
 takes in input two points on the map, latitude and longitude
 returns a distance between the points in meters
 */
-function haversineDistance(point1: LatLng, point2: LatLng): number {
+export function haversineDistance(point1: LatLng, point2: LatLng): number {
     const R = 6371e3; // Raggio della Terra in metri
 
     const lat1 = point1.latitude * Math.PI / 180; // conversione in radianti

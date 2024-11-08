@@ -106,7 +106,7 @@ const UploadedAudio = ({
     });
 
     return (
-        <View key={audio.id} className="flex flex-col bg-zinc-800 rounded-md p-4">
+        <SafeAreaView key={audio.id} className="flex flex-col bg-zinc-800 rounded-md p-4">
             <View className=" bg-zinc-800 flex flex-row items-center rounded-md">
                 <View className="flex-1">
                     <Link href={`/song/${audio.id}`}>
@@ -151,7 +151,7 @@ const UploadedAudio = ({
                 </View>
             </View>
             {uri && <AudioPlayer uri={uri} />}
-        </View>
+        </SafeAreaView>
     );
 };
 

@@ -5,7 +5,7 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { LatLng } from 'react-native-maps';
 import { IconButton, Button, Text } from 'react-native-paper';
-import { POICardProps } from '../MarkerModals/POICard';
+import { getPOITypeFromOverpassData, POICardProps } from '../MarkerModals/POICard';
 import { isPOIRecommended } from '@/utils/overpass/POIsAudios_Associations';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -112,6 +112,7 @@ const DirectionsSelector = ({
           address: element.tags['addr:street'],
           coordinates: { latitude: element.lat, longitude: element.lon },
           recommended: poiRecommendation,
+          type: getPOITypeFromOverpassData(element),
           link: element.tags.wikipedia
             ? `https://it.wikipedia.org/wiki/${element.tags.wikipedia}`
             : null,

@@ -27,10 +27,14 @@ export async function sendOverpassRequest(
                 [out:json]
                 [timeout:${timeout}]
                 ;
-                
-                    node
-                    ["historic"~"."]
-                    ["name"];
+                    (
+                        node["historic"]["name"]({{bbox}});
+                        node["tourism"]["name"]["wikipedia"]({{bbox}});
+                    );
+
+                    // node
+                    // ["historic"~"."]
+                    // ["name"];
                     
                 
                 out geom;
@@ -85,7 +89,35 @@ export function createOverpassPathQuery(
 
     pathCopy.forEach(([lon, lat]) => {
         query += `
-        node["historic"~"."]["name"](around:${radius}, ${lat}, ${lon});
+            node
+            ["historic"~"."]
+            ["name"]
+            (around:${radius}, ${lat}, ${lon});
+
+            node
+            ["tourism"~"."]
+            ["name"]
+            ["wikipedia"]
+            (around:${radius}, ${lat}, ${lon});
+
+            node
+            ["leisure"~"^
+            (park|garden)$"]
+            ["name"]
+            ["wikipedia"]
+            (around:${radius}, ${lat}, ${lon});
+
+            node
+            ["building"="government"]
+            ["name"]
+            ["wikipedia"]
+            (around:${radius}, ${lat}, ${lon});
+
+            node
+            ["amenity"="place_of_worship"]
+            ["name"]
+            ["wikipedia"]
+            (around:${radius}, ${lat}, ${lon});
         `;
     });
 
@@ -226,6 +258,14 @@ export async function getCoordinatesName(
 export const usePOIs = (region: Region) => {
     const oldBBox = useRef(null);
 
+
+    // node["amenity"="place_of_worship"]["name"]["wikipedia"];
+    // node["historic"]["name"]["wikipedia"];
+    // node["tourism"="museum"]["name"]["wikipedia"];
+    // node["tourism"="gallery"]["name"]["wikipedia"];
+    // node["building"="government"]["name"]["wikipedia"];
+    // node["leisure"~"^(park|garden)$"]["name"]["wikipedia"];
+    
     const fetcher = useCallback(
         async (url: string | URL, { arg }: { arg: BBox }) => {
             return await fetch(url, {
@@ -240,7 +280,25 @@ export const usePOIs = (region: Region) => {
                     node
                     ["historic"~"."]
                     ["name"];
-                
+
+                    node
+                    ["tourism"~"."]
+                    ["name"]
+                    ["wikipedia"];
+
+                    node
+                    ["leisure"~"^(park|garden)$"]
+                    ["name"]
+                    ["wikipedia"];
+
+                    node
+                    ["building"="government"]
+                    ["name"]
+                    ["wikipedia"];
+
+                    node["amenity"="place_of_worship"]
+                    ["name"]
+                    ["wikipedia"];
                 
                 out tags geom;
             `),
@@ -249,7 +307,14 @@ export const usePOIs = (region: Region) => {
                         "university-project-echoscape (liam.busnelliurso@studio.unibo.it)",
                 },
             })
+                .then(data => {
+                    console.log("DEBUG DATA.status: ", data.status)
+                    console.log("DEBUG DATA.headers: ", data.headers)
+                    console.log("DEBUG DATA.body: ", data.body)
+                    return data
+                })
                 .then((res) => res.json())
+                .then(data => {console.log("DEBUG DATA RICHIESTA BBOX: ", data); return data})
                 .then((data) => data.elements)
                 .then((elements) => {
                     return elements.map((element, index) => {

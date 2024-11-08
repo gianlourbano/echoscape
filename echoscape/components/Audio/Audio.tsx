@@ -91,7 +91,7 @@ export const Audio = ({ index, name, refresh }: AudioProps) => {
                         icon={isPlaying ? "pause" : "play"}
                         iconColor="green"
                         onPress={() => {
-                            setIsPlaying(true);
+                            setIsPlaying(prev => !prev);
                         }}
                     />
                     <IconButton

@@ -12,10 +12,24 @@ export interface POICardProps {
     address?: string;
     coordinates: LatLng;
     recommended: boolean;
-    type?: string;
+    type?: POIType;
     link?: string;
     additionalInfo?: { label: string; value: string }[];
     onClose?: () => void;
+}
+
+export type POIType = '' | 'historic' | 'tourism' | 'leisure' | 'building' | 'place_of_worship';
+export function getPOITypeFromOverpassData(item): POIType {
+
+    let type: POIType = ''
+
+    if ('tourism' in item.tags) type = 'tourism'
+    else if ('leisure' in item.tags) type = 'leisure'
+    else if ('building' in item.tags) type = 'building'
+    else if ('amenity' in item.tags) type = 'place_of_worship'
+    else if ('historic' in item.tags) type = 'historic'
+
+    return type
 }
 
 const POICard: React.FC<POICardProps> = ({ name, address, coordinates, recommended, link, additionalInfo, type, onClose }) => { 
@@ -39,17 +53,19 @@ const POICard: React.FC<POICardProps> = ({ name, address, coordinates, recommend
         onClose()
     }
 
-    const getCardStyle = (type?: string) => {
+    const getCardStyle = (type?: POIType) => {
         //TODO i tipi di POI devono coincidere con quelli di overpass
         switch (type) {
-            case 'monument':
-                return styles.monumentCard;
+            case 'historic':
+                return styles.historicCard;
             case 'building':
                 return styles.buildingCard;
-            case 'park':
-                return styles.parkCard;
-            case 'museum':
-                return styles.museumCard;
+            case 'leisure':
+                return styles.leisureCard;
+            case 'tourism':
+                return styles.tourismCard;
+            case 'place_of_worship':
+                return styles.worshipCard;
             default:
                 return styles.defaultCard;
         }
@@ -65,16 +81,19 @@ const POICard: React.FC<POICardProps> = ({ name, address, coordinates, recommend
         */}
         <Card style={[styles.card, getCardStyle(type), recommended && styles.recommendedCard]}>
             <Card.Content>
-                <Title onPress={handleCardTitlePress}>{name}</Title>
+                <Title style={styles.textColor} onPress={handleCardTitlePress}>{name}</Title>
                 <View style={styles.streetNameContainer}>
                     <Icon name="diff-renamed" size={16} color="#999" style={styles.icon} />
-                    <Paragraph>{resolvedAddress}</Paragraph>
+                    <Paragraph style={styles.textColor}>{resolvedAddress}</Paragraph>
+                </View>
+                <View>
+                    <Text style={styles.textColor}>type: {type}</Text>
                 </View>
                 {additionalInfo && additionalInfo.map((info, index) => (
                     <Paragraph key={index}>
                     <Text>
-                        <Text style={{ fontWeight: 'bold' }}>{info.label}: </Text>
-                        <Text>{info.value}</Text>
+                        <Text style={[{ fontWeight: 'bold' }, styles.textColor]}>{info.label}: </Text>
+                        <Text style={styles.textColor}>{info.value}</Text>
                     </Text>
                 </Paragraph>
                 ))} 
@@ -106,17 +125,20 @@ const styles = StyleSheet.create({
     card: {
         marginBottom: 16,
     },
-    monumentCard: {
+    historicCard: {
         backgroundColor: '#f8d7da',
     },
     buildingCard: {
         backgroundColor: '#d1ecf1',
     },
-    parkCard: {
+    leisureCard: {
         backgroundColor: '#d4edda',
     },
-    museumCard: {
+    tourismCard: {
         backgroundColor: '#fff3cd',
+    },
+    worshipCard: {
+        backgroundColor: '#f003cd'
     },
     defaultCard: {
         backgroundColor: '#0f0f0f',
@@ -131,6 +153,9 @@ const styles = StyleSheet.create({
     streetNameContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    textColor: {
+        color: "black"
     },
 });
 
