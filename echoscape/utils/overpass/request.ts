@@ -277,7 +277,7 @@ export const usePOIs = (region: Region) => {
                 [bbox:${arg[1]},${arg[0]},${arg[3]},${arg[2]}]
                 [out:json]
                 ;
-                
+                (
                     node
                     ["historic"~"."]
                     ["name"];
@@ -297,10 +297,11 @@ export const usePOIs = (region: Region) => {
                     ["name"]
                     ["wikipedia"];
 
-                    node["amenity"="place_of_worship"]
+                    node
+                    ["amenity"="place_of_worship"]
                     ["name"]
                     ["wikipedia"];
-                
+                );
                 out tags geom;
             `),
                 headers: {
