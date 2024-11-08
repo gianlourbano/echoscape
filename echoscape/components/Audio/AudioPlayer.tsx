@@ -40,7 +40,7 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
 
     return (
         <View className="flex flex-row items-center">
-            <Animated.View className="h-5 bg-zinc-800 rounded-md flex-1" layout={LinearTransition}>
+            <Animated.View className="h-4 bg-zinc-600 rounded-md flex-1" layout={LinearTransition}>
                 <Animated.View
                     className="h-full bg-green-600 rounded-md transition-all"
                     style={animatedStyle}
