@@ -1,18 +1,8 @@
 import { useState, useEffect } from "react";
 import { AVPlaybackStatus, Audio } from "expo-av";
-import * as FileSystem from "expo-file-system";
-import { getUserBaseURI } from "@/utils/fs/fs";
 
 import * as Notifications from "expo-notifications";
 
-/*
-hook to play an audio
-output: function that, when called, plays the sound
-the function returned takes one argument, which is the audio to play
-when sound changes or when component unmounts unloads the audio, to prevent memory leaks
-usage:
-    const playSound = usePlaySound()
-*/
 export function usePlaySound(
     onPlayBackStatusUpdate?: (status: AVPlaybackStatus) => void
 ) {
@@ -27,16 +17,21 @@ export function usePlaySound(
     const [sound, setSound] = useState<Audio.Sound | null>(null);
 
     async function playSound(file: any) {
+        if(sound) {
+            await sound.setStatusAsync({shouldPlay: true})
+            return;
+        }
+
         console.log(`usePlaySound: Loading Sound (${file})`);
-        const { sound } = await Audio.Sound.createAsync(
+        const { sound: s } = await Audio.Sound.createAsync(
             file,
             { shouldPlay: true },
             onPlayBackStatusUpdate
         );
-        setSound(sound);
+        setSound(s);
 
-        await sound.setStatusAsync({
-             shouldPlay: true
+        await s.setStatusAsync({
+            shouldPlay: true
         });
 
         console.log("usePlaySound: Playing Sound");
@@ -50,22 +45,22 @@ export function usePlaySound(
         });
 
         //unloads sound right after playing it
-        //sound.unloadAsync();
+        //s.unloadAsync();
     }
 
     useEffect(() => {
+        console.log("THIS MF");
         return sound
             ? () => {
                   console.log("usePlaySound: Unloading Sound");
                   sound.unloadAsync();
               }
             : undefined;
-    }, [sound]);
+    }, []);
 
     return {
         playSound,
-        pauseSound: sound?.pauseAsync || (() => {}),
-        stopSound: sound?.stopAsync,
+        sound: sound,
     };
 }
 

@@ -1,18 +1,30 @@
 import PageContainer from "@/components/PageContainer";
-import { View, Text, TouchableOpacity, Animated } from "react-native";
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    ScrollView,
+    RefreshControl,
+    Button,
+} from "react-native";
 import { useState, useEffect } from "react";
-import { Audio } from "expo-av";
-import { IconButton, Button } from "react-native-paper";
 import { getUserTmpUri } from "@/utils/fs/fs";
 import * as FileSystem from "expo-file-system";
-import { useLocalSearchParams } from "expo-router";
-import { Audio as AudioComponent } from "@/components/Audio/Audio";
+import { router, useLocalSearchParams } from "expo-router";
+import { extractDate, extractFileName } from "@/components/Audio/Audio";
 import { useNetInfo } from "@react-native-community/netinfo";
-import { useAudioDB } from "@/utils/sql/sql";
+import { deleteAudioData, useAudioDB } from "@/utils/sql/sql";
 import { useAuth } from "@/utils/auth/AuthProvider";
 import { useLocation } from "@/utils/location/location";
 import { Recorder } from "@/components/Audio/Recorder";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import Animated, {
+    FadeIn,
+    FadeOut,
+    LinearTransition,
+} from "react-native-reanimated";
+import { AudioPlayer } from "@/components/Audio/AudioPlayer";
+import { IconButton } from "react-native-paper";
 
 type AudioItem = {
     id: string;
@@ -23,10 +35,48 @@ type AudioItem = {
 export type AudioPageProps = {
     lat?: string;
     lng?: string;
+    name?: string;
+};
+
+const ToBeUploadedAudio = ({
+    uri,
+    index,
+    refresh,
+}: {
+    uri: string;
+    index: number;
+    refresh: () => void;
+}) => {
+    return (
+        <Animated.View className="bg-zinc-800 rounded-md p-2">
+            <View className="flex flex-row items-center">
+                <View className="flex-1">
+                    <Text className="text-white font-bold text-xl">
+                        Recording #{index}
+                    </Text>
+                    <Text className="text-white">
+                        {extractDate(extractFileName(uri))[0] +
+                            "|" +
+                            extractDate(extractFileName(uri))[1]}
+                    </Text>
+                </View>
+                <IconButton
+                    className=" "
+                    icon="delete"
+                    iconColor="white"
+                    onPress={async () => {
+                        FileSystem.deleteAsync(uri).then(() => refresh());
+                        await deleteAudioData(uri);
+                    }}
+                />
+            </View>
+            <AudioPlayer uri={uri} />
+        </Animated.View>
+    );
 };
 
 export default function Page({}) {
-    const { lat, lng } = useLocalSearchParams<AudioPageProps>();
+    const { lat, lng, name } = useLocalSearchParams<AudioPageProps>();
 
     const loc = useLocation();
 
@@ -34,79 +84,28 @@ export default function Page({}) {
 
     const { withAuthFetch } = useAuth();
 
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
-    const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [audioItems, setAudioItems] = useState<string[]>([]);
 
-    const { addAudioData, getAudioData, uploadAudioData } = useAudioDB();
+    const { addAudioData, uploadAudioData } = useAudioDB();
 
     async function loadRecordings() {
         const dir = await getUserTmpUri();
         const recordings = await FileSystem.readDirectoryAsync(dir);
-        console.log("recordings: ", recordings);
-        setAudioItems(
-            recordings.map((recording) => dir + "/" + recording).reverse()
-        );
+
+        const sorted = recordings.sort((a, b) => {
+            return (
+                new Date(b.split("-")[1]).getTime() -
+                new Date(a.split("-")[1]).getTime()
+            );
+        });
+        setAudioItems(sorted.map((recording) => dir + "/" + recording));
     }
 
     useEffect(() => {
         loadRecordings();
     }, []);
 
-    useEffect(() => {
-        return sound
-            ? () => {
-                  sound.unloadAsync();
-              }
-            : undefined;
-    }, [sound]);
-
-    async function startRecording() {
-        try {
-            await Audio.requestPermissionsAsync();
-            await Audio.setAudioModeAsync({
-                allowsRecordingIOS: true,
-                playsInSilentModeIOS: true,
-            });
-
-            const { recording } = await Audio.Recording.createAsync(
-                Audio.RecordingOptionsPresets.HIGH_QUALITY
-            );
-            setRecording(recording);
-        } catch (err) {
-            console.error("Failed to start recording", err);
-        }
-    }
-
-    async function stopRecording() {
-        if (!recording) return;
-
-        await recording.stopAndUnloadAsync();
-        const uri = recording.getURI();
-        setRecording(null);
-
-        if (uri) {
-            const newItem: AudioItem = {
-                id: Date.now().toString(),
-                uri,
-                status: "pending",
-            };
-
-            const dir = await getUserTmpUri();
-            const filename = `recording-${Date.now()}.m4a`;
-            const to = `${dir}/${filename}`;
-
-            await FileSystem.moveAsync({
-                from: uri,
-                to: to,
-            });
-
-            setAudioItems([...audioItems, to]);
-        }
-    }
-
     const uploadAudio = async (uri: string) => {
-
         await addAudioData(uri);
 
         if (netInfo.isConnected && netInfo.isInternetReachable) {
@@ -119,14 +118,17 @@ export default function Page({}) {
             });
 
             const audioCoords = {
-                lat: (lat && lng) ? lat : loc.coords.latitude,
-                lng: (lat && lng) ? lng : loc.coords.longitude
-            }
+                lat: lat && lng ? lat : loc.coords.latitude,
+                lng: lat && lng ? lng : loc.coords.longitude,
+            };
 
-            const response = await withAuthFetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/upload?longitude=${audioCoords.lng}&latitude=${audioCoords.lat}`, {
-                method: "POST",
-                body: form
-            })
+            const response = await withAuthFetch(
+                `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/upload?longitude=${audioCoords.lng}&latitude=${audioCoords.lat}`,
+                {
+                    method: "POST",
+                    body: form,
+                }
+            );
 
             if (!response.ok) {
                 console.error("Error uploading audio:", await response.json());
@@ -147,25 +149,29 @@ export default function Page({}) {
 
             // refetch every fucking single audio
 
-            const audio_data_all = await Promise.all((
-                await Promise.all(
-                    allaudios.map((audio) => {
-                        return withAuthFetch(
-                            `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`
-                        );
-                    })
-                )
-            ).map((res) => res.json()));
+            const audio_data_all = await Promise.all(
+                (
+                    await Promise.all(
+                        allaudios.map((audio) => {
+                            return withAuthFetch(
+                                `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`
+                            );
+                        })
+                    )
+                ).map((res) => res.json())
+            );
 
             // now try and match loudness, bpm and danceability
 
             const final_backend_id = audio_data_all.find((audio) => {
-                return audio.tags.bpm === data.bpm && audio.tags.loudness === data.loudness && audio.tags.danceability === data.danceability
+                return (
+                    audio.tags.bpm === data.bpm &&
+                    audio.tags.loudness === data.loudness &&
+                    audio.tags.danceability === data.danceability
+                );
             })?.id;
 
             console.log(final_backend_id);
-
-            
 
             await uploadAudioData(uri, JSON.stringify(data), final_backend_id);
 
@@ -184,59 +190,79 @@ export default function Page({}) {
         }
     };
 
+    const [isRecording, setIsRecording] = useState(false);
+
     return (
-        <PageContainer className="flex-1 bg-zinc-700">
-            <GestureHandlerRootView>
-                <Recorder />
-            </GestureHandlerRootView>
-            <View>
-                <Text className="text-2xl font-bold text-center text-white">
-                    Record audio
-                </Text>
-            </View>
-            <View>
-                <Text className="text-lg text-center text-white">
-                    Record audio and upload it!
-                </Text>
-
-                <View className="flex-row items-center justify-center">
-                    <IconButton
-                        icon="microphone"
-                        onPress={recording ? stopRecording : startRecording}
-                    />
-                    <Text className="text-center mt-2 text-gray-600">
-                        {recording
-                            ? "Tap to stop recording"
-                            : "Tap to start recording"}
+        <PageContainer className="flex flex-col bg-zinc-700 h-full p-4" safe>
+            <View className="flex-1 flex flex-col gap-4">
+                <View className="flex flex-row items-center">
+                    <Text className="text-2xl font-bold text-green-600 flex-1 p-2">
+                        Pending Audios
                     </Text>
+
+                    {(name) ? (
+                        <Animated.View className="bg-green-600 rounded-md p-2" exiting={FadeOut}>
+                            <TouchableOpacity onPress={() => {router.replace("/post")}}>
+                                <Text className="text-lg text-white font-bold">
+                                    Associate to {name}
+                                </Text>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    ): null}
                 </View>
-
-                <View className="flex flex-col gap-4">
-                    {audioItems.length > 0 &&
-                        audioItems.map((item, index) => {
-                            return (
-                                <View key={item}>
-                                    <AudioComponent
-                                        index={index}
-                                        name={item}
-                                        refresh={loadRecordings}
-                                    />
-
-                                    <View className="flex flex-row w-full gap-2 justify-evenly">
-                                        <Button onPress={async () => {}}>
-                                            Transcribe
-                                        </Button>
-                                        <Button
+                <ScrollView>
+                    <RefreshControl
+                        onRefresh={() => loadRecordings()}
+                        refreshing={false}
+                    />
+                    <View className="mt-4 flex flex-col gap-4">
+                        {audioItems.length > 0 &&
+                            audioItems.map((item, index) => {
+                                return (
+                                    <Animated.View
+                                        className="bg-zinc-800 rounded-md"
+                                        entering={FadeIn}
+                                        exiting={FadeOut}
+                                        key={item}
+                                    >
+                                        <ToBeUploadedAudio
+                                            uri={item}
+                                            index={index + 1}
+                                            refresh={() => loadRecordings()}
+                                        />
+                                        <TouchableOpacity
                                             onPress={() => uploadAudio(item)}
+                                            className="px-2 pb-2"
                                         >
-                                            Upload
-                                        </Button>
-                                    </View>
-                                </View>
-                            );
-                        })}
-                </View>
+                                            <View className="bg-green-600 p-2 rounded-md">
+                                                <Text className="text-white text-center">
+                                                    Upload
+                                                </Text>
+                                            </View>
+                                        </TouchableOpacity>
+                                    </Animated.View>
+                                );
+                            })}
+                    </View>
+                </ScrollView>
             </View>
+            <Animated.View className="h-[27%]" layout={LinearTransition}>
+                <GestureHandlerRootView>
+                    <Recorder
+                        isRecording={isRecording}
+                        onPressStart={() => setIsRecording(true)}
+                        onPressStop={() => {
+                            setIsRecording(false);
+                        }}
+                        onNewAudioReady={() => loadRecordings()}
+                    />
+                </GestureHandlerRootView>
+            </Animated.View>
+            {/* {!isRecording && (
+                <Animated.Text className="text-center font-bold text-white text-4xl" exiting={FadeOut} entering={FadeIn} >
+                    Record Audio!
+                </Animated.Text>
+            )} */}
         </PageContainer>
     );
 }

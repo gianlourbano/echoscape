@@ -61,6 +61,44 @@ export const WikipediaDesc = ({ wikidata }: { wikidata: string }) => {
     );
 };
 
+export const AssociateAudioToPOIRedirect = ({
+    latitude,
+    longitude,
+    name
+}: {
+    latitude: number;
+    longitude: number;
+    name?: string;
+}) => {
+    const loc = useLocation();
+
+    const [distance, setDistance] = useState<number>(0);
+
+    useEffect(() => {
+        if (loc)
+            setDistance(haversineDistance(loc.coords, { latitude, longitude }));
+    }, [loc]);
+
+    return (
+        <View className="bg-green-600 rounded-md p-2">
+            {distance < 50 ? (
+                <Link
+                    href={`/post?lat=${latitude}&lng=${longitude}&name=${name}`}
+                    className="rounded-md p-2"
+                >
+                    <Text className="text-lg text-white font-bold">
+                        Associate Audio
+                    </Text>
+                </Link>
+            ) : (
+                <Text className="text-lg text-white font-bold">
+                    You are too far to associate an audio
+                </Text>
+            )}
+        </View>
+    );
+};
+
 export default function POIDetailsPage({}) {
     const { poi, name, wikidata, wikipedia, latitude, longitude } =
         useLocalSearchParams<POIDetailsPageProps>();
@@ -77,6 +115,7 @@ export default function POIDetailsPage({}) {
             >
                 <ScrollView className="flex flex-col h-full p-4 gap-4">
                     <View className="flex flex-col gap-4">
+                        <AssociateAudioToPOIRedirect latitude={Number(latitude)} longitude={Number(longitude)} name={name}/>
                         <WikipediaDesc wikidata={wikidata} />
                         <View className="bg-zinc-800 flex flex-row rounded-md p-2">
                             <IconButton icon="map-marker" size={24} />
@@ -112,6 +151,8 @@ import Animated, {
 } from "react-native-reanimated";
 import { TouchableOpacity } from "react-native";
 import { Icon, IconButton } from "react-native-paper";
+import { useLocation } from "@/utils/location/location";
+import { haversineDistance } from "@/utils/map/routes";
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 

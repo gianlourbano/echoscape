@@ -80,7 +80,7 @@ export const Stats = () => {
 
         tiles.push({
             text: "of your tracks are danceable",
-            percentage: `${percentage_danceability}%`,
+            percentage: `${Math.ceil(percentage_danceability)}%`,
         });
 
         const average_bpm =
@@ -88,7 +88,7 @@ export const Stats = () => {
 
         tiles.push({
             text: "average BPM",
-            percentage: `${average_bpm}`,
+            percentage: `${Math.ceil(average_bpm)}`,
         });
 
         // pick two random moods
@@ -111,12 +111,12 @@ export const Stats = () => {
 
         tiles.push({
             text: `of your tracks are ${mood1}`,
-            percentage: `${mood1_percentage}%`,
+            percentage: `${Math.ceil(mood1_percentage)}%`,
         });
 
         tiles.push({
             text: `of your tracks are ${mood2}`,
-            percentage: `${mood2_percentage}%`,
+            percentage: `${Math.ceil(mood2_percentage)}%`,
         });
 
         // get top 5 genres for each track
@@ -186,7 +186,7 @@ export const Stats = () => {
                     </Text>
                     , appearing in{" "}
                     <Text className="font-bold">
-                        {Object.entries(genres)[0][1]}%
+                        {Math.ceil(Object.entries(genres)[0][1])}%
                     </Text>{" "}
                     of your songs
                 </Text>

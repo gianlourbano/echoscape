@@ -1,9 +1,10 @@
 // utils/audioDB.ts
 import * as SQLite from 'expo-sqlite';
 import { ss_get } from "../secureStore/SStore";
-import * as FileSystem from "expo-file-system"
 
-const db = SQLite.openDatabaseSync("audios.db");
+const db = SQLite.openDatabaseSync("audios.db", {
+    
+});
 
 
 export interface AudioData {

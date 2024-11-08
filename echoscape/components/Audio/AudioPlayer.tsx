@@ -18,7 +18,6 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
         return { 
             width: `${(progress.value * 100)}%`,
             borderRadius: 5
-            
     };  
     });
 
@@ -36,11 +35,11 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
         }
     };
 
-    const {playSound, pauseSound} = usePlaySound(getProgress);
+    const {playSound, sound} = usePlaySound(getProgress);
 
     return (
-        <View className="flex flex-row items-center">
-            <Animated.View className="h-4 bg-zinc-600 rounded-md flex-1" layout={LinearTransition}>
+        <Animated.View className="flex flex-row items-center" layout={LinearTransition}>
+            <Animated.View className="h-3 bg-zinc-600 rounded-md flex-1" layout={LinearTransition}>
                 <Animated.View
                     className="h-full bg-green-600 rounded-md transition-all"
                     style={animatedStyle}
@@ -50,18 +49,18 @@ export const AudioPlayer = ({ uri }: { uri: string }) => {
             <IconButton
                 icon={isPlaying ? "pause" : "play"}
                 iconColor="green"
-                onPress={() => {
+                onPress={async () => {
                     if(isPlaying) {
-                        pauseSound();
+                        await sound.pauseAsync();
                         setIsPlaying(false);
                     }
                     else {
                         console.log(uri);
-                        playSound({uri});
+                        await playSound({uri});
                         setIsPlaying(true);
                     }
                 }}
             />
-        </View>
+        </Animated.View>
     );
 };

@@ -26,6 +26,9 @@ export default function App() {
                         <BottomNavigation.Bar
                             animationEasing={Easing.inOut(Easing.ease)}
                             shifting
+                            style={{
+                                backgroundColor: "#27272a",
+                            }}
                             navigationState={state}
                             safeAreaInsets={insets}
                             onTabPress={({ route, preventDefault }) => {
@@ -76,6 +79,7 @@ export default function App() {
             >
                 <MaterialBottomTabs.Screen
                     name="index"
+
                     options={{
                         tabBarLabel: "Map",
                         tabBarIcon(props) {
@@ -95,7 +99,9 @@ export default function App() {
                 />
                 <MaterialBottomTabs.Screen
                     name="post/index"
+
                     options={{
+                        unmountOnBlur: true,
                         tabBarLabel: "Post",
                         tabBarIcon(props) {
                             return (
