@@ -65,7 +65,7 @@ export default function RootLayout() {
 
                     toBeUploadedAudios.forEach((item) => {
                         console.log(`attempting to upload ${item.uri}...`);
-                        uploadAudio(item.uri);
+                        //uploadAudio(item.uri);
                     });
                 }
             }, 5000)
