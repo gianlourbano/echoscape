@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 }
             }
         },
-        []
+        [netInfo]
     );
 
     const withAuthFetch = useCallback(
