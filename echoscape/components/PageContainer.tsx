@@ -14,7 +14,6 @@ export default function PageContainer({
         return (
             <SafeAreaView 
                 className="bg-zinc-700"
-                style={safe_area_view.AndroidSafeArea}
             >
                 <View className={`bg-zinc-700 h-full ${className}`}>
                     {children}
