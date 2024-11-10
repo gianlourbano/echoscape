@@ -85,8 +85,6 @@ export default function SettingsPage() {
                             </Text>
                         </TouchableOpacity>
                     </SettingsContainer>
-                    <SettingsContainer title="Data"></SettingsContainer>
-                    <SettingsContainer title="Notifications"></SettingsContainer>
                     <SettingsContainer title="About">
                         <Text className="text-white text-lg">
                             Echoscape v0.1.0
