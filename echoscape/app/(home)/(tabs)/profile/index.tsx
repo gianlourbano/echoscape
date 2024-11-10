@@ -1,6 +1,6 @@
 import { useAuth } from "@/utils/auth/AuthProvider";
 import { getUserBaseURI } from "@/utils/fs/fs";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
     RefreshControl,
     RefreshControlComponent,
@@ -35,6 +35,7 @@ import Animated, {
 
 import * as FS from "expo-file-system";
 import { useLevelInfo } from "@/utils/level/level";
+import { useNetInfo } from "@react-native-community/netinfo";
 
 interface BackendAudioItem {
     id: number;
@@ -102,6 +103,8 @@ const UploadedAudio = ({
 }) => {
     const { withAuthFetch } = useAuth();
 
+    const netInfo = useNetInfo();
+
     const [uri, setUri] = useState<string | null>(null);
 
     const { getAudioFromBackendID } = useAudioDB();
@@ -138,6 +141,7 @@ const UploadedAudio = ({
                     </Link>
                     <IconButton
                         icon={audio.hidden ? "eye-off" : "eye"}
+                        disabled={!netInfo.isConnected}
                         onPress={() => {
                             withAuthFetch(
                                 `${
@@ -150,6 +154,7 @@ const UploadedAudio = ({
                     />
                     <IconButton
                         icon="delete"
+                        disabled={!netInfo.isConnected}
                         onPress={() => {
                             withAuthFetch(
                                 `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${audio.id}`,
@@ -172,24 +177,58 @@ const UploadedAudio = ({
 };
 
 const BackendAudioView = () => {
+    const { getAudioData } = useAudioDB();
+
+    const netInfo = useNetInfo();
+
     const { data, isLoading, error, mutate } = useFetch(`/audio/my`, {
         cache: false,
     });
+
+    const [offlineData, setOfflineData] = useState([]);
+
+    // useEffect(() => {
+    //     (async () => {
+    //         if (!netInfo.isConnected) {
+    //             const data = await getAudioData();
+    //             console.log(data);
+
+    //             setOfflineData(data.map(a => {
+    //                 id: a.backend_id,
+
+    //             }))
+                
+    //         }
+    //     })();
+    // }, [netInfo]);
 
     return (
         <ScrollView className="mt-2">
             <RefreshControl refreshing={isLoading} onRefresh={() => mutate()} />
 
             <SafeAreaView className="flex flex-col gap-4">
-                {data?.map((audio: BackendAudioItem, index: number) => {
-                    return (
-                        <UploadedAudio
-                            key={audio.id + index}
-                            audio={audio}
-                            mutate={mutate}
-                        />
-                    );
-                })}
+                {!netInfo.isConnected &&
+                    offlineData.map(
+                        (audio: BackendAudioItem, index: number) => {
+                            return (
+                                <UploadedAudio
+                                    key={audio.id + index}
+                                    audio={audio}
+                                    mutate={mutate}
+                                />
+                            );
+                        }
+                    )}
+                {data &&
+                    data?.map((audio: BackendAudioItem, index: number) => {
+                        return (
+                            <UploadedAudio
+                                key={audio.id + index}
+                                audio={audio}
+                                mutate={mutate}
+                            />
+                        );
+                    })}
             </SafeAreaView>
             <View className="h-32" />
         </ScrollView>

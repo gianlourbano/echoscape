@@ -132,7 +132,10 @@ sends to overpass the query in input
 returns a promise which in turn becomes overpass response
 */
 export async function fetchOverpass(query) {
-    console.log("[DEBUG fetchOverpass] process.env.EXPO_PUBLIC_OVERPASS_API_URL: ", process.env.EXPO_PUBLIC_OVERPASS_API_URL)
+    console.log(
+        "[DEBUG fetchOverpass] process.env.EXPO_PUBLIC_OVERPASS_API_URL: ",
+        process.env.EXPO_PUBLIC_OVERPASS_API_URL
+    );
     try {
         const response = await fetch(process.env.EXPO_PUBLIC_OVERPASS_API_URL, {
             method: "POST",
@@ -309,12 +312,12 @@ export const usePOIs = (region: Region) => {
                         "university-project-echoscape (liam.busnelliurso@studio.unibo.it)",
                 },
             })
-                .then(data => {
-                    return data
+                .then((data) => {
+                    return data;
                 })
                 .then((res) => res.json())
                 .then((data) => {
-                    console.log("DEBUG DATA RICHIESTA BBOX: ", data);
+                    //console.log("DEBUG DATA RICHIESTA BBOX: ", data);
                     return data;
                 })
                 .then((data) => data.elements)

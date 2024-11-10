@@ -28,6 +28,7 @@ if (false) {
     console.debug = () => {};
 }
 
+
 export default function RootLayout() {
     useEffect(() => {
         // notifications
@@ -46,32 +47,26 @@ export default function RootLayout() {
                 console.log(
                     `[network listener] state.type: ${state.type}, state.isConnected: ${state.isConnected} `
                 );
-
-                sendNotification({
-                    title: "netInfo event listener",
-                    body: `connection type ${state.type}, is connected ${state.isConnected}`,
-                });
                 if (state.isConnected) {
-                    sendNotification({
-                        title: "uploading audios",
-                        body: "unified notification for audio upload",
-                    });
+                    
                     const toBeUploadedAudios: AudioData[] =
                         await getToBeUploadedAudioData();
+
+                    if(toBeUploadedAudios.length > 0) {
+                        sendNotification({
+                            title: "Connected!",
+                            body: "Open the app and upload your audios!",
+                        });
+                    }
 
                     console.log(
                         `[network listener] toBeUploadedAudios (length ${toBeUploadedAudios.length}) ${toBeUploadedAudios}`
                     );
-
-                    toBeUploadedAudios.forEach((item) => {
-                        console.log(`attempting to upload ${item.uri}...`);
-                        //uploadAudio(item.uri);
-                    });
+                    
+                    
                 }
             }, 5000)
         );
-
-        console.log("root layout mounted");
     }, []);
 
     return (

@@ -224,7 +224,7 @@ export const Stats = () => {
                         </View>
                     ))}
                 </ScrollView>
-                <View className="h-80 p-2">
+                {/* <View className="h-80 p-2">
                     <PolarChart
                         data={DATA()} // 👈 specify your data
                         labelKey={"label"} // 👈 specify data key for labels
@@ -249,7 +249,7 @@ export const Stats = () => {
                             )}
                         </Pie.Chart>
                     </PolarChart>
-                </View>
+                </View> */}
             </View>
         </ScrollView>
     );

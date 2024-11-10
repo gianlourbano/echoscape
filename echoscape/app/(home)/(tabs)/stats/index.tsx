@@ -14,7 +14,7 @@ export default function StatsPage() {
                 <Text className="text-4xl text-white font-bold flex-1">
                     Stats
                 </Text>
-                <Button
+                {/* <Button
                     className="bg-zinc-800"
                     mode="contained"
                     theme={{
@@ -26,7 +26,7 @@ export default function StatsPage() {
                     onPress={() => navigate("/report")}
                 >
                     <Text className="text-green-600">Report</Text>
-                </Button>
+                </Button> */}
             </View>
             <Stats />
         </PageContainer>

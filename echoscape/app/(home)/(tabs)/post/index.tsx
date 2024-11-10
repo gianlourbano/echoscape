@@ -152,9 +152,6 @@ export default function Page({}) {
 
             // search for the audio we just uploaded
 
-            console.log(allaudios);
-            console.log(data);
-
             // refetch every fucking single audio
 
             const audio_data_all = await Promise.all(

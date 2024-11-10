@@ -12,10 +12,11 @@ import {
 import { useRouter } from "expo-router";
 
 import * as FileSystem from "expo-file-system";
+import { useNetInfo } from "@react-native-community/netinfo";
 
 const [AuthProvider_, useAuth] = createStrictContext<AuthContext>(undefined);
 
-const getToken = async (payload: { username: string; password: string }) => {
+export const getToken = async (payload: { username: string; password: string }) => {
     const res = await fetch(
         `${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/auth/token`,
         {
@@ -57,6 +58,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [user, setUser] = useState<UserData | undefined>(undefined);
 
     const router = useRouter();
+
+    const netInfo = useNetInfo();
 
     const authDispatchAsync = useCallback(
         async (
@@ -103,6 +106,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (!payload.username || !payload.password) {
                         setAuthStatus("error-invalid-credentials");
                         return "LOGIN_FAILED";
+                    }
+
+                    if(!netInfo.isConnected) {
+                        setUser({
+                            id: "0",
+                            username: await ss_get("username")
+                        })
+
+                        setAuthStatus("authenticated");
+                        router.navigate("/");
+                        return "LOGIN_SUCCESFUL"
                     }
 
                     const data = await getToken(payload);
@@ -161,10 +175,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const token = await ss_get("token");
             const lastUpdate = await ss_get("lastUpdate");
 
-            // if (!isConnected) {
-            //     setAuthStatus("error-no-connection");
-            //     return new Response(null, { status: 503 });
-            // }
+            if (!netInfo.isConnected) {
+                console.log("no connc")
+                setAuthStatus("error-no-connection");
+                return new Response(null, { status: 503 });
+            }
 
             if (
                 !token ||
@@ -209,8 +224,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     return new Response(JSON.stringify(error));
                 });
         },
-        []
+        [netInfo]
     );
+
+    
 
     useEffect(() => {
         const checkAuth = async () => {

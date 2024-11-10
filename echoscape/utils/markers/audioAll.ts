@@ -3,9 +3,7 @@ import { inCache } from "../cache/cache";
 import { getAudioId, MapMarkerInfo } from "./mapMarkers";
 import { regionToLatLng } from "../map/mapUtils";
 
-export async function audioAllRequest(
-    token: string
-): Promise<MapMarkerInfo[]> {
+export async function audioAllRequest(token: string): Promise<MapMarkerInfo[]> {
     const response = await fetch(
         "${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all",
         {
@@ -41,24 +39,25 @@ takes in input an array of positions and a box
 returns an array containing only elements inside the box
 */
 function filterAllAudios(
-    array: MapMarkerInfo[],
+    array: [],
     maxLat: number,
     minLat: number,
     maxLng: number,
     minLng: number
 ) {
     const filteredArray = array.filter((element) => {
-        if (0) console.log("DEBUG ", element, (
-            maxLat >= element.position.lat &&
-            minLat <= element.position.lat &&
-            maxLng >= element.position.lng &&
-            minLng <= element.position.lng
-        ), "element.position.lat, lng: ", element.position.lat, element.position.lng, "maxLat minLat maxLng minLng", maxLat, minLat, maxLng, minLng)
+        /*if (0) 
+        console.log("DEBUG ", element, (
+            maxLat >= element.geometry.coordinates[1] &&
+            minLat <= element.geometry.coordinates[1] &&
+            maxLng >= element.geometry.coordinates[0] &&
+            minLng <= element.geometry.coordinates[0]
+        ), "element.position.lat, lng: ", element.position.lat, element.position.lng, "maxLat minLat maxLng minLng", maxLat, minLat, maxLng, minLng)*/
         return (
-            maxLat >= element.position.lat &&
-            minLat <= element.position.lat &&
-            maxLng >= element.position.lng &&
-            minLng <= element.position.lng
+            maxLat >= element.geometry.coordinates[1] &&
+            minLat <= element.geometry.coordinates[1] &&
+            maxLng >= element.geometry.coordinates[0] &&
+            minLng <= element.geometry.coordinates[0]
         );
     });
 
@@ -92,17 +91,15 @@ returns an array containing only elements inside the box that are NOT in cache
 */
 export async function composeAudiosToFetchArray(
     region: Region,
-    allAudiosArray: MapMarkerInfo[]
+    allAudiosArray: []
 ) {
-
-    const coordinates = regionToLatLng(region)
-    const maxLat = coordinates.maxLat
-    const minLat = coordinates.minLat
-    const maxLng = coordinates.maxLng
-    const minLng = coordinates.minLng
+    const coordinates = regionToLatLng(region);
+    const maxLat = coordinates.maxLat;
+    const minLat = coordinates.minLat;
+    const maxLng = coordinates.maxLng;
+    const minLng = coordinates.minLng;
 
     //LOG//console.log("composeAudiosToFetchArray eseguita lat: ", maxLat, minLat, " lng ", maxLng, minLng );
-
 
     if (allAudiosArray.length !== 0) {
         const visibleAudios = filterAllAudios(
@@ -114,10 +111,19 @@ export async function composeAudiosToFetchArray(
         );
         console.debug("number of visible audios: ", visibleAudios.length);
         const cachedAudios = await Promise.all(
-            visibleAudios.map((item) => inCache(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/${getAudioId(item.markerId)}`))
+            visibleAudios.map((item) =>
+                inCache(
+                    `${
+                        process.env.EXPO_PUBLIC_BACKEND_BASE_URL
+                    }/audio/${getAudioId(item.properties.id)}`
+                )
+            )
         );
         //console.log("[composeAudiosToFetchArray] cachedAudios (length: ", cachedAudios.length, "): ", cachedAudios);
-        console.debug("[composeAudiosToFetchArray] returns array: ",visibleAudios.filter((item, index) => !cachedAudios[index]));
-        return(visibleAudios.filter((item, index) => !cachedAudios[index]));
+        console.debug(
+            "[composeAudiosToFetchArray] returns array: ",
+            visibleAudios.filter((item, index) => !cachedAudios[index])
+        );
+        return visibleAudios.filter((item, index) => !cachedAudios[index]);
     }
 }
