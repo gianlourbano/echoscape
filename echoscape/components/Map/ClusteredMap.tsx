@@ -15,6 +15,7 @@ import POIListModal from "../MarkerModals/POIListModal";
 import { POICardProps } from "../MarkerModals/POICard";
 import { useLocation } from "@/utils/location/location";
 import Animated, { FadeInDown, FadeInUp, FadeOutUp } from "react-native-reanimated";
+import { getZoomLevel } from "@/utils/map/mapUtils";
 
 const MemoizedMarker = memo(
     ({ coordinate, children, ...props }: MapMarkerProps) => {
@@ -78,40 +79,34 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
 
     const { data: POIs, isLoading: POIsLoading } = usePOIs(region);
 
+    const [genreFilter, setGenreFilter] = useState<string | null>(null);
+
     const applyTransform = useCallback(
         (data, pois) => {
             if (!data || !pois) return [];
 
-            const radius = 0.0005;
+            console.log(data);
 
-            const newData = [...data];
-            const assignedMarkers = [];
-
-            pois.forEach((poi) => {
-                const { latitude, longitude } = poi;
-
-                newData.forEach((marker, index) => {
-                    const markerLat = marker.geometry.coordinates[1];
-                    const markerLng = marker.geometry.coordinates[0];
-
-                    // Calculate the distance between the marker and the point of interest
-                    const distance = Math.sqrt(
-                        Math.pow(markerLat - latitude, 2) +
-                            Math.pow(markerLng - longitude, 2)
-                    );
-
-                    // If the marker is within the radius of the point of interest, assign it to the point of interest
-                    if (distance <= radius) {
-                        assignedMarkers.push(marker);
-                        newData.splice(index, 1);
-                    }
-                });
-            });
+            if(genreFilter) {
+                data.filter((item) => {
+                    // get from cache
+                    const id = item.properties.id.split("-")[1];
+                    
+                })
+            }
 
             return [...data, ...pois, ...memes];
         },
-        [data, POIs, region]
+        [data, POIs, region, genreFilter]
     );
+
+    useEffect(() => {
+        // 
+        if (getZoomLevel(region) > 16) {
+            
+        }
+
+    }, [region, data])
 
     function onMapPress(event: MapPressEvent) {
         event.persist();

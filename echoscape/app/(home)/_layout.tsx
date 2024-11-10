@@ -4,6 +4,7 @@ import { Text } from "moti";
 
 import { Redirect, SplashScreen, Stack } from "expo-router";
 import { useAuth } from "@/utils/auth/AuthProvider";
+import * as Notifications from "expo-notifications"
 
 export default function App() {
     
@@ -20,6 +21,7 @@ export default function App() {
 
     SplashScreen.hideAsync();
 
+    Notifications.requestPermissionsAsync();
     
     return (
         <Stack
