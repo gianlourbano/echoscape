@@ -195,7 +195,7 @@ export default function SongPage() {
                     <Text className="text-4xl font-bold text-green-600">
                         Associated POI
                     </Text>
-                        {associatedPOIs ?
+                        {associatedPOIs && associatedPOIs.length > 0 ?
                         <Link className="text-white"
                             href={
                                 POIDetailsObjToURL({
