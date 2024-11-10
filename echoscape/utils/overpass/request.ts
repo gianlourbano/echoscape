@@ -124,8 +124,6 @@ export function createOverpassPathQuery(
 
     query += ");out body;";
 
-    console.log("richiesta a overpass: ", query);
-
     return query;
 }
 
@@ -310,9 +308,6 @@ export const usePOIs = (region: Region) => {
                 },
             })
                 .then(data => {
-                    console.log("DEBUG DATA.status: ", data.status)
-                    console.log("DEBUG DATA.headers: ", data.headers)
-                    console.log("DEBUG DATA.body: ", data.body)
                     return data
                 })
                 .then((res) => res.json())

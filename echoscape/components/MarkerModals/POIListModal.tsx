@@ -49,12 +49,21 @@ const POIListModal: React.FC<POIListModalProps> = ({ visible, onClose, data }) =
                                     }
                                 }}>Close</Button>
                         </View>
-                        <FlatList
-                            data={data}
-                            renderItem={renderItem}
-                            keyExtractor={(item, index) => index.toString()}
-                            contentContainerStyle={styles.list}
-                        />
+                        {data.length > 0 ?
+                            <FlatList
+                                data={data}
+                                renderItem={renderItem}
+                                keyExtractor={(item, index) => index.toString()}
+                                contentContainerStyle={styles.list}
+                            />
+                        :
+                        <>
+                        <Text>There are no POIs near you!</Text>
+                        <Text>Move somewhere near a Point of Interest to associate your audios to it.</Text>
+                        </>
+
+                        }
+
                     </Card.Content>
                 </Card>
             </Modal>
@@ -64,7 +73,7 @@ const POIListModal: React.FC<POIListModalProps> = ({ visible, onClose, data }) =
 
 const styles = StyleSheet.create({
     modal: {
-        backgroundColor: '#374151',  //zinc-700
+        backgroundColor: '#3f3f46',  //zinc-700
         padding: 20,
         margin: 20,
         borderRadius: 10,

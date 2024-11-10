@@ -2,12 +2,13 @@
 import { getRouteNodes, matchPOIsToNodes } from '@/utils/map/routes';
 import { createOverpassPathQuery, fetchOverpass, getCoordinatesName } from '@/utils/overpass/request';
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { LatLng } from 'react-native-maps';
 import { IconButton, Button, Text } from 'react-native-paper';
 import { getPOITypeFromOverpassData, POICardProps } from '../MarkerModals/POICard';
 import { isPOIRecommended } from '@/utils/overpass/POIsAudios_Associations';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useLocation } from '@/utils/location/location';
 
 interface DirectionsSelectorProps {
   onClose: () => void;
@@ -28,6 +29,8 @@ const DirectionsSelector = ({
   setDirectionsMarkers,
   defaultEndingPoint,
 }: DirectionsSelectorProps) => {
+  const loc = useLocation()
+
   const [button1Text, setButton1Text] = useState<string>('Start');
   const [button2Text, setButton2Text] = useState<string>('Destination');
 
@@ -37,12 +40,15 @@ const DirectionsSelector = ({
   const [startPoint, setStartPoint] = useState<LatLng | null>(null);
   const [endPoint, setEndPoint] = useState<LatLng | null>(null);
 
+  const [routeResponseLoading, setRouteResponseLoading] = useState<boolean>(false)
+
   useEffect(() => {
     if (defaultEndingPoint) {
       handleEndPointChange(defaultEndingPoint);
       getCoordinatesName(defaultEndingPoint).then(setButton2Text);
     }
   }, []);
+
 
   useEffect(() => {
     if (selectingStartPoint && onMapPressEventCoords) {
@@ -56,6 +62,8 @@ const DirectionsSelector = ({
       setSelectingEndPoint(false);
     }
   }, [onMapPressEventCoords]);
+
+
 
   function handleStartPointChange(newStartPoint: LatLng) {
     setStartPoint(newStartPoint);
@@ -89,9 +97,23 @@ const DirectionsSelector = ({
     setButton2Text(button1Text)
   }
 
+  function handleSetMyPositionButtonPress() {
+    if (selectingStartPoint && loc) {
+      handleStartPointChange(loc.coords);
+      getCoordinatesName(loc.coords).then(setButton1Text);
+      setSelectingStartPoint(false);
+    }
+    if (selectingEndPoint && loc) {
+      handleEndPointChange(loc.coords);
+      getCoordinatesName(loc.coords).then(setButton2Text);
+      setSelectingEndPoint(false);
+    }
+  }
+
   async function handleGetDirectionsButtonPress() {
     if (!startPoint || !endPoint) return;
 
+    setRouteResponseLoading(true)
     const route = await getRouteNodes(
       startPoint.latitude,
       startPoint.longitude,
@@ -99,8 +121,10 @@ const DirectionsSelector = ({
       endPoint.longitude
     );
     onRouteCompute(route);
-
     const overpassResponse = await fetchOverpass(createOverpassPathQuery(route));
+
+    setRouteResponseLoading(false)
+
     const POICardsInfo = await Promise.all(
       overpassResponse.elements.map(async (element) => {
         const poiRecommendation = await isPOIRecommended({
@@ -116,7 +140,7 @@ const DirectionsSelector = ({
           link: element.tags.wikipedia
             ? `https://it.wikipedia.org/wiki/${element.tags.wikipedia}`
             : null,
-          additionalInfo: [{ label: 'recommended', value: poiRecommendation ? 'yes' : 'no' }],
+          additionalInfo: [],
         };
 
         return cardInfo;
@@ -186,12 +210,22 @@ const DirectionsSelector = ({
           iconColor="#FFFFFF"
         />
         {/* invert buttons */}
-        <IconButton
-          icon="swap-vertical"
-          size={24}
-          onPress={handleSwapButtonPress}
-          iconColor="#FFFFFF"
-        />
+        {(selectingStartPoint || selectingEndPoint) && loc ?
+          <IconButton
+            icon="crosshairs-gps"
+            size={24}
+            onPress={handleSetMyPositionButtonPress}
+            iconColor="#FFFFFF"
+          />
+        :
+          <IconButton
+            icon="swap-vertical"
+            size={24}
+            onPress={handleSwapButtonPress}
+            iconColor="#FFFFFF"
+          />
+        }
+        
       </View>
 
       {/* Bottoni per la Mappa */}
@@ -223,15 +257,21 @@ const DirectionsSelector = ({
       </View>
 
       {/* Bottone per calcolare il percorso */}
-      <View style={styles.rightColumn}>
-        <Button onPress={handleGetDirectionsButtonPress} disabled={!startPoint || !endPoint}>
-          <IconButton
-            icon="map-marker-right-outline"
-            size={24}
-            iconColor={!startPoint || !endPoint ? '#6B7280' : '#22c55e'}
-          />
-        </Button>
-      </View>
+      {routeResponseLoading ? 
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#22c55e" />
+        </View>
+      :
+        <View style={styles.rightColumn}>
+          <Button onPress={handleGetDirectionsButtonPress} disabled={!startPoint || !endPoint}>
+            <IconButton
+              icon="map-marker-right-outline"
+              size={24}
+              iconColor={!startPoint || !endPoint ? '#6B7280' : '#22c55e'}
+            />
+          </Button>
+        </View>
+      }
     </SafeAreaView>
   );
 };
