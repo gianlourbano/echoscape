@@ -15,14 +15,31 @@ export function usePlaySound(
     });
 
     const [sound, setSound] = useState<Audio.Sound | null>(null);
+    const [duration, setDuration] = useState<number | null>(null);
 
     async function playSound(file: any) {
         if(sound) {
-            await sound.setStatusAsync({shouldPlay: true})
+            const status = await sound.getStatusAsync();
+            if(status.positionMillis === status.durationMillis) {
+                await sound.setStatusAsync({
+                    positionMillis: 0,
+                    shouldPlay: true,
+                })
+                return;
+            } else {
+                await sound.setStatusAsync({shouldPlay: true})
+            }
+            console.log(status);
+            
             return;
         }
 
         console.log(`usePlaySound: Loading Sound (${file})`);
+        await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: true,
+        });
         const { sound: s } = await Audio.Sound.createAsync(
             file,
             { shouldPlay: true },
@@ -30,8 +47,12 @@ export function usePlaySound(
         );
         setSound(s);
 
+        const status = await s.getStatusAsync();
+        setDuration(status.durationMillis);
+
         await s.setStatusAsync({
-            shouldPlay: true
+            shouldPlay: true,
+
         });
 
         console.log("usePlaySound: Playing Sound");
@@ -61,6 +82,7 @@ export function usePlaySound(
     return {
         playSound,
         sound: sound,
+        duration,
     };
 }
 

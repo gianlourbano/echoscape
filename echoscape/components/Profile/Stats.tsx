@@ -1,9 +1,10 @@
-import { View, Text, ScrollView, Platform } from "react-native";
+import { View, Text, ScrollView, Platform, RefreshControl } from "react-native";
 import { useAuth } from "@/utils/auth/AuthProvider";
 import { useAudioDB, BackendAudioData } from "@/utils/sql/sql";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { PolarChart, Pie, PieSliceData, useSlicePath } from "victory-native";
 import {
+    Circle,
     Fill,
     matchFont,
     Path,
@@ -20,8 +21,6 @@ interface TileData {
 }
 
 export const Stats = () => {
-    const { user } = useAuth();
-
     const [topTiles, setTopTiles] = useState<TileData[]>([]);
     const [tiles, setTiles] = useState<TileData[]>([]);
     const [genres, setGenres] = useState<Record<string, number>>({});
@@ -35,12 +34,12 @@ export const Stats = () => {
         setCrunchingStatus("crunching");
         const full_data = await getAudioData();
 
-        const data = full_data.map((audio) =>
+        let data = full_data.map((audio) =>
             JSON.parse(audio.backendData)
         ) as BackendAudioData[];
 
         // filter out eventual broken data (shouldn't happen)
-        data.filter((audio) => audio.bpm !== undefined);
+        data = data.filter((audio) => audio.bpm !== undefined);
 
         if (data.length === 0) {
             setCrunchingStatus("empty");
@@ -165,7 +164,7 @@ export const Stats = () => {
     if (crunchingStatus === "empty") {
         return (
             <Text className="text-white text-lg text-center">
-                No data to show
+                No data to show! Upload some audios to get started!
             </Text>
         );
     }
@@ -175,75 +174,96 @@ export const Stats = () => {
     }
 
     return (
-        <View className="flex flex-col gap-4">
-            <View></View>
-            <View className="bg-zinc-800 rounded-lg p-4">
-                <Text className="text-4xl font-bold text-white">Genres</Text>
-                <Text className="p-2 text-white text-xl">
-                    Your top genre is{" "}
-                    <Text className="font-bold text-green-600 ">
-                        {Object.keys(genres)[0]}
+        <ScrollView>
+            <RefreshControl
+                refreshing={crunchingStatus === "crunching"}
+                onRefresh={crunchData}
+            />
+
+            <View className="flex flex-col gap-4">
+                <View></View>
+                <View className="bg-zinc-800 rounded-lg p-4">
+                    <Text className="text-4xl font-bold text-white">
+                        Genres
                     </Text>
-                    , appearing in{" "}
-                    <Text className="font-bold">
-                        {Math.ceil(Object.entries(genres)[0][1])}%
-                    </Text>{" "}
-                    of your songs
-                </Text>
-                <View className="flex flex-col gap-2 p-4">
-                    {Object.entries(genres).map(([genre, count]) => (
+                    <Text className="p-2 text-white text-xl">
+                        Your top genre is{" "}
+                        <Text className="font-bold text-green-600 ">
+                            {Object.keys(genres)[0]}
+                        </Text>
+                        , appearing in{" "}
+                        <Text className="font-bold">
+                            {Math.ceil(Object.entries(genres)[0][1])}%
+                        </Text>{" "}
+                        of your songs
+                    </Text>
+                    <View className="flex flex-col gap-2 p-4">
+                        {Object.entries(genres).map(([genre, count]) => (
+                            <View
+                                style={{ width: `${count}%` }}
+                                className="bg-green-600 px-4 py-1 rounded-md"
+                                key={genre}
+                            >
+                                <Text key={genre} className="text-white">
+                                    {genre}
+                                </Text>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+                <ScrollView className="rounded-md" horizontal>
+                    {tiles.map((i) => (
                         <View
-                            style={{ width: `${count}%` }}
-                            className="bg-green-600 px-4 py-1 rounded-md"
-                            key={genre}
+                            className="h-40 w-40 bg-zinc-800 rounded-lg mr-4 p-4"
+                            key={i.text}
                         >
-                            <Text key={genre} className="text-white">
-                                {genre}
+                            <Text className="text-green-600 font-bold text-4xl">
+                                {i.percentage}
                             </Text>
+                            <Text className="text-white text-xl">{i.text}</Text>
                         </View>
                     ))}
+                </ScrollView>
+                <View className="h-80 p-2">
+                    <PolarChart
+                        data={DATA()} // 👈 specify your data
+                        labelKey={"label"} // 👈 specify data key for labels
+                        valueKey={"value"} // 👈 specify data key for values
+                        colorKey={"color"} // 👈 specify data key for color
+                    >
+                        <Pie.Chart innerRadius={30}>
+                            {({ slice }) => (
+                                <Fragment>
+                                    <MyCustomSlice
+                                        slice={slice}
+                                        minVal={125}
+                                        maxVal={225}
+                                    />
+                                    <Pie.SliceAngularInset
+                                        angularInset={{
+                                            angularStrokeWidth: 5,
+                                            angularStrokeColor: "#3f3f46",
+                                        }}
+                                    />
+                                </Fragment>
+                            )}
+                        </Pie.Chart>
+                    </PolarChart>
                 </View>
             </View>
-            <ScrollView className="rounded-md" horizontal>
-                {tiles.map((i) => (
-                    <View
-                        className="h-40 w-40 bg-zinc-800 rounded-lg mr-4 p-4"
-                        key={i.text}
-                    >
-                        <Text className="text-green-600 font-bold text-4xl">
-                            {i.percentage}
-                        </Text>
-                        <Text className="text-white text-xl">{i.text}</Text>
-                    </View>
-                ))}
-            </ScrollView>
-            <View className="h-80 p-2">
-                <PolarChart
-                    data={DATA()} // 👈 specify your data
-                    labelKey={"label"} // 👈 specify data key for labels
-                    valueKey={"value"} // 👈 specify data key for values
-                    colorKey={"color"} // 👈 specify data key for color
-                >
-                    <Pie.Chart innerRadius={30}>
-                        {({ slice }) => (
-                            <>
-                                <MyCustomSlice slice={slice} minVal={125} maxVal={225}/>
-                                <Pie.SliceAngularInset
-                                    angularInset={{
-                                        angularStrokeWidth: 5,
-                                        angularStrokeColor: "#3f3f46",
-                                    }}
-                                />
-                            </>
-                        )}
-                    </Pie.Chart>
-                </PolarChart>
-            </View>
-        </View>
+        </ScrollView>
     );
 };
 
-function MyCustomSlice({ slice, minVal, maxVal }: { slice: PieSliceData, minVal: number, maxVal: number }) {
+function MyCustomSlice({
+    slice,
+    minVal,
+    maxVal,
+}: {
+    slice: PieSliceData;
+    minVal: number;
+    maxVal: number;
+}) {
     // 👇 use the hook to generate a path object.
 
     const fontFamily = Platform.select({ ios: "Helvetica", default: "serif" });
@@ -263,27 +283,31 @@ function MyCustomSlice({ slice, minVal, maxVal }: { slice: PieSliceData, minVal:
         },
     });
 
-    console.log(slice);
-
     /* 👇 experiment wtih any other customizations you want */
     return (
-        <>
+        <Fragment>
             <Path path={path} color={slice.color} style="fill" />
             {slice.value > 180 ? (
                 <SKText
                     x={
                         slice.center.x +
-                        Math.cos((slice.startAngle + (slice.sweepAngle / 2)) *  0.015708) * (130)
+                        Math.cos(
+                            (slice.startAngle + slice.sweepAngle / 2) * 0.015708
+                        ) *
+                            130
                     }
                     y={
                         slice.center.y +
-                        Math.sin((slice.startAngle + (slice.sweepAngle / 2)) *  0.015708) * (130)
+                        Math.sin(
+                            (slice.startAngle + slice.sweepAngle / 2) * 0.015708
+                        ) *
+                            130
                     }
                     font={font}
                     text={slice.label}
                 ></SKText>
             ) : null}
-        </>
+        </Fragment>
     );
 }
 

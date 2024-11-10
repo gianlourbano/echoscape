@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { MapMarkerProps, MapPressEvent } from "react-native-maps"
 import {  LatLng, Marker, Polyline, PROVIDER_GOOGLE, UrlTile } from "react-native-maps";
@@ -13,6 +13,8 @@ import { ClusterMarker, render } from "./Markers";
 import DirectionsSelector from "./DirectionsSelector";
 import POIListModal from "../MarkerModals/POIListModal";
 import { POICardProps } from "../MarkerModals/POICard";
+import { useLocation } from "@/utils/location/location";
+import Animated, { FadeInDown, FadeInUp, FadeOutUp } from "react-native-reanimated";
 
 const MemoizedMarker = memo(
     ({ coordinate, children, ...props }: MapMarkerProps) => {
@@ -25,6 +27,8 @@ const MemoizedMarker = memo(
 );
 
 export default function ClusteredMap({ latitude: initialLatitude, longitude: initialLongitude } : LatLng) {
+    const loc = useLocation();
+    
     const [region, setRegion] = useState({
         latitude: 44.485377,
         longitude: 11.339487,
@@ -178,7 +182,7 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
     );
 
     return (
-    <>
+    <Fragment>
         <MapView
             style={styles.map}
             region={region}
@@ -187,6 +191,7 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
             showsPointsOfInterest={false}
             onLongPress={(e) => {
                     console.log(JSON.stringify(e.nativeEvent, null, 2));
+                    // @ts-ignore
                     handleMapLongPress(e);
                 }
             }
@@ -218,18 +223,18 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
             <Marker
                 coordinate={onMapPressMarkerCoordinates}>
             </Marker> 
-            : <></>}
+            : null}
 
             {showDirectionsMenu && directionsMarkers.startingPoint ? 
             <Marker
                 coordinate={directionsMarkers.startingPoint}
             />
-            : <></>}
+            : null}
             {showDirectionsMenu && directionsMarkers.endingPoint ? 
             <Marker
                 coordinate={directionsMarkers.endingPoint}
             />
-            : <></>}
+            : null}
 
             <Polyline
                 coordinates={polylineCoords}
@@ -263,7 +268,7 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
         </View>
 
         {showDirectionsMenu ? 
-        <View style={{ position: 'absolute', top: 0, zIndex: 1, width: '100%' }}>
+        <Animated.View style={{ position: 'absolute', top: 0, zIndex: 1, width: '100%' }} entering={FadeInUp} exiting={FadeOutUp}>
             <DirectionsSelector 
                 onClose={handleDirectionsClosePress}
                 onMapPressEventCoords={directionsOnMapPressEvent}
@@ -272,9 +277,9 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
                 setDirectionsMarkers={setDirectionsMarkers}
                 defaultEndingPoint={onMapPressMarkerCoordinates}
             />
-        </View>
+        </Animated.View>
         :
-        <></>}
+        null}
 
 
         {showPoiList ? 
@@ -283,8 +288,8 @@ export default function ClusteredMap({ latitude: initialLatitude, longitude: ini
             onClose={handleClosePOIList}
             data={poiListData}
             />
-        :<></>}
-    </>
+        :null}
+    </Fragment>
     );
 }
 

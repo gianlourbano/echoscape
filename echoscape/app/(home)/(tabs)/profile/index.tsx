@@ -14,7 +14,7 @@ import * as FileSystem from "expo-file-system";
 import { Button, Surface, Avatar, IconButton, Icon } from "react-native-paper";
 import { Image, SafeAreaView } from "moti";
 import { Audio } from "@/components/Audio/Audio";
-import { Link, router, Tabs } from "expo-router";
+import { Link, router, Tabs, useLocalSearchParams } from "expo-router";
 import { UserData } from "@/utils/auth/types";
 import * as ImagePicker from "expo-image-picker";
 import { useFetch } from "@/hooks/useFetch";
@@ -32,6 +32,9 @@ import Animated, {
     useSharedValue,
     withTiming,
 } from "react-native-reanimated";
+
+import * as FS from "expo-file-system";
+import { useLevelInfo } from "@/utils/level/level";
 
 interface BackendAudioItem {
     id: number;
@@ -55,10 +58,30 @@ const UserAvatar = ({ user }: { user: UserData }) => {
         console.log(result);
 
         if (!result.canceled) {
+            console.log(result.assets[0].uri);
+
+            const baseDir = await getUserBaseURI();
+            await FS.copyAsync({
+                from: result.assets[0].uri,
+                to: `${baseDir}/profile.jpg`,
+            });
             setImage(result.assets[0].uri);
-            user.url = result.assets[0].uri;
         }
     };
+
+    useEffect(() => {
+        (async () => {
+            const baseDir = await getUserBaseURI();
+            const profileImage = await FileSystem.getInfoAsync(
+                `${baseDir}/profile.jpg`
+            );
+            if (profileImage.exists) {
+                setImage(`${baseDir}/profile.jpg`);
+            } else {
+                console.log("fucked up big time");
+            }
+        })();
+    }, []);
 
     return (
         <Avatar.Image
@@ -102,7 +125,7 @@ const UploadedAudio = ({
                         </Text>
                     </Link>
                     <Text className="text-gray-500">
-                        {uri && extractDate(extractFileName(uri))[0]} |{" "}
+                        {uri && `${extractDate(extractFileName(uri))[0]} | `}
                         {uri && extractDate(extractFileName(uri))[1]}
                     </Text>
                 </View>
@@ -168,7 +191,7 @@ const BackendAudioView = () => {
                     );
                 })}
             </SafeAreaView>
-            <View className="h-32"/>
+            <View className="h-32" />
         </ScrollView>
     );
 };
@@ -201,17 +224,26 @@ export const extractDate = (filename: string) => {
 };
 
 const ProfilePage = () => {
+    const { newBadge } = useLocalSearchParams();
+
+    console.log(newBadge);
+
     const { user } = useAuth();
 
     return (
         <PageContainer className="flex flex-col gap-4 p-4" safe>
             <View className="bg-zinc-800 rounded-md p-4 flex flex-row items-center gap-4">
                 <UserAvatar user={user} />
-                <Text className="text-white text-2xl font-bold">
+                <Text className="text-white text-2xl font-bold flex-1">
                     @{user?.username}
                 </Text>
+                <View className="flex flex-col items-center justify-center">
+                    <Link href="/settings" asChild>
+                        <IconButton icon="cog" size={32} />
+                    </Link>
+                </View>
             </View>
-            <LevelInfo />
+            <LevelInfo newBadge={newBadge} />
             <Animated.View layout={LinearTransition} className="flex-1">
                 <Text className="text-2xl text-green-600 font-bold">
                     Uploaded Audios
@@ -222,12 +254,20 @@ const ProfilePage = () => {
     );
 };
 
-const LevelInfo = () => {
-    const [isExpanded, setIsExpanded] = useState(false);
+const LevelInfo = ({ newBadge }) => {
+    const [isExpanded, setIsExpanded] = useState(newBadge === "1");
 
     const toggleExpand = () => {
         setIsExpanded(!isExpanded);
     };
+
+    const { levelInfo, update } = useLevelInfo();
+
+    useEffect(() => {
+        if (newBadge === "1") {
+            update();
+        }
+    }, []);
 
     return (
         <TouchableOpacity
@@ -242,38 +282,38 @@ const LevelInfo = () => {
             >
                 <View className="flex flex-row gap-4 items-center">
                     <Text className="text-white font-bold text-2xl">
-                        Level 5
+                        Level {levelInfo?.level}
                     </Text>
                     <View className="bg-zinc-700 flex-1 rounded-md h-3 w-full">
-                        <View className="bg-green-600 w-[35%] h-full rounded-md" />
+                        <Animated.View
+                            layout={LinearTransition}
+                            className="bg-green-600 h-full rounded-md"
+                            style={{
+                                width: `${
+                                    (levelInfo?.exp / levelInfo?.nextLevel) *
+                                    100
+                                }%`,
+                            }}
+                        />
                     </View>
                 </View>
 
                 {isExpanded && (
                     <Animated.View entering={FadeIn} exiting={FadeOut}>
                         <Text className="text-white font-bold text-xl">
-                            Experience: 700/2000
+                            Experience: {levelInfo?.exp}/{levelInfo?.nextLevel}
                         </Text>
                         <Text className="text-white font-bold text-xl">
-                            Level up in 24 uploads!
+                            Something
                         </Text>
                         <View className="bg-zinc-700 rounded-md p-2 mt-2">
                             <Text className="text-green-600 font-bold text-xl mb-2">
                                 Badges
                             </Text>
                             <View className="flex flex-row flex-wrap gap-2">
-                                <Icon source="matrix" color="white" size={35} />
-                                <Icon source="debian" color="white" size={35} />
-                                <Icon
-                                    source="hammer-sickle"
-                                    color="white"
-                                    size={35}
-                                />
-                                <Icon
-                                    source="radioactive"
-                                    color="white"
-                                    size={35}
-                                />
+                                {levelInfo?.badges.map((badge: string) => (
+                                    <IconButton icon={badge} key={badge} />
+                                ))}
                             </View>
                         </View>
                     </Animated.View>

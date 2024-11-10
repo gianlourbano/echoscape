@@ -22,6 +22,7 @@ export type UserData = {
     username: string;
     id: string;
     url?: string;
+    level_exp?: number;
 };
 
 export type AuthContext = {

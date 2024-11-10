@@ -1,9 +1,12 @@
 import { POIDetailsObjToURL } from "@/app/(home)/poi/[poi]";
+import { updateLevelInfo, useLevelInfo } from "@/utils/level/level";
+import { useLocation } from "@/utils/location/location";
+import { haversineDistance } from "@/utils/map/routes";
 import SuperclusterClass from "@/utils/markers/supercluster";
 import SuperclusterNS from "@/utils/markers/types";
-import { Href, Link } from "expo-router";
-import { useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import { Href, Link, router } from "expo-router";
+import { useEffect, useState } from "react";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { Callout, Marker } from "react-native-maps";
 import { Badge, Icon, IconButton } from "react-native-paper";
 
@@ -38,15 +41,33 @@ export function ClusterMarker({ point, supercluster }: ClusterMarkerProps) {
                         .map((leaf) => {
                             switch (leaf.properties.type) {
                                 case "audio":
-                                    return <AudioMarkerCallout point={leaf} key={leaf.properties.id} />;
+                                    return (
+                                        <AudioMarkerCallout
+                                            point={leaf}
+                                            key={leaf.properties.id}
+                                        />
+                                    );
                                 case "poi":
-                                    return <POIMarkerCallout point={leaf} key={leaf.properties.id}/>;
+                                    return (
+                                        <POIMarkerCallout
+                                            point={leaf}
+                                            key={leaf.properties.id}
+                                        />
+                                    );
                                 case "special":
                                     return (
-                                        <SpecialMarkerCallout point={leaf} key={leaf.properties.id}/>
+                                        <SpecialMarkerCallout
+                                            point={leaf}
+                                            key={leaf.properties.id}
+                                        />
                                     );
                                 default:
-                                    return <POIMarkerCallout point={leaf} key={leaf.properties.id}/>;
+                                    return (
+                                        <POIMarkerCallout
+                                            point={leaf}
+                                            key={leaf.properties.id}
+                                        />
+                                    );
                             }
                         })}
                 </View>
@@ -57,12 +78,14 @@ export function ClusterMarker({ point, supercluster }: ClusterMarkerProps) {
 
 function AudioMarkerCallout({ point }: MarkerProps) {
     return (
-        <Link href={`/song/${point.properties.id.split("-")[1]}`} className="w-56" key={point.properties.id}>
+        <Link
+            href={`/song/${point.properties.id.split("-")[1]}`}
+            className="w-56"
+            key={point.properties.id}
+        >
             <View className="w-56 flex flex-row gap-2 items-center justify-center">
                 <Icon source={"music"} size={30} color="black" />
-                <Text
-                    className=" text-center max-w-40"
-                >
+                <Text className=" text-center max-w-40">
                     {point.properties.name}
                 </Text>
             </View>
@@ -83,18 +106,23 @@ export function AudioMarker({ point }: MarkerProps) {
 
 function POIMarkerCallout({ point }: MarkerProps) {
     return (
-        <View className="w-56 flex flex-row gap-2 items-center justify-center" key={point.properties.id}>
+        <View
+            className="w-56 flex flex-row gap-2 items-center justify-center"
+            key={point.properties.id}
+        >
             <Icon source={"bookshelf"} size={30} color="black" />
-            <Link 
-                href={POIDetailsObjToURL({
-                    poi: point.properties.id,
-                    name: point.properties.name,
-                    wikidata: point.properties.wikidata,
-                    wikipedia: point.properties.wikipedia,
-                    latitude: point.geometry.coordinates[1].toString(),
-                    longitude: point.geometry.coordinates[0].toString(),
-                }) as unknown as Href<string>}
-                key={point.properties.id} 
+            <Link
+                href={
+                    POIDetailsObjToURL({
+                        poi: point.properties.id,
+                        name: point.properties.name,
+                        wikidata: point.properties.wikidata,
+                        wikipedia: point.properties.wikipedia,
+                        latitude: point.geometry.coordinates[1].toString(),
+                        longitude: point.geometry.coordinates[0].toString(),
+                    }) as unknown as Href<string>
+                }
+                key={point.properties.id}
                 className=" text-center max-w-40"
             >
                 {point.properties.name}
@@ -115,13 +143,63 @@ export function POIMarker({ point }: MarkerProps) {
 }
 
 function SpecialMarkerCallout({ point }: MarkerProps) {
+    const {levelInfo, update} = useLevelInfo();
+    const loc = useLocation();
+
+    const [distance, setDistance] = useState<number | null>(null);
+
+    useEffect(() => {
+        if (loc) {
+            setDistance(
+                haversineDistance(
+                    {
+                        latitude: loc.coords.latitude,
+                        longitude: loc.coords.longitude,
+                    },
+                    {
+                        latitude: point.geometry.coordinates[1],
+                        longitude: point.geometry.coordinates[0],
+                    }
+                )
+            );
+        }
+    }, [loc]);
+
     return (
-        <View className="w-56 flex flex-row gap-2 items-center justify-center" key={point.properties.id}>
-            <Icon source={point.properties.icon} size={30} color="black" />
-            <Text key={point.properties.id} className=" text-center max-w-40">
-                {point.properties.name}
-            </Text>
-        </View>
+            <View
+                className="w-56 flex flex-row gap-2 items-center justify-center"
+                key={point.properties.id}
+            >
+                <Icon source={point.properties.icon} size={30} color="black" />
+                <Text
+                    key={point.properties.id}
+                    className=" text-center max-w-40"
+                >
+                    {point.properties.name}
+                </Text>
+                <View>
+                    {!levelInfo?.badges.includes(point.properties.icon) ? (
+                        <TouchableOpacity
+                            disabled={distance > 100}
+                            onPress={() => {
+                                if (distance < 100) {
+                                    updateLevelInfo(50, point.properties.icon);
+                                    update().then(() => {
+                                        router.push("/profile?newBadge=1");
+                                    })
+                                    
+                                }
+                            }}
+                        >
+                            <Icon source="candy-outline" size={30} />
+                        </TouchableOpacity>
+                    ) : (
+                        <View>
+                            <Icon source="candy" size={30} color="#16a34a"/>
+                        </View>
+                    )}
+                </View>
+            </View>
     );
 }
 

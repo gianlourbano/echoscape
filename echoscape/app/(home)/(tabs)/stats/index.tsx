@@ -23,15 +23,12 @@ export default function StatsPage() {
                             primary: "#27272a",
                         },
                     }}
-
                     onPress={() => navigate("/report")}
                 >
                     <Text className="text-green-600">Report</Text>
                 </Button>
             </View>
-            <ScrollView>
-                <Stats />
-            </ScrollView>
+            <Stats />
         </PageContainer>
     );
 }

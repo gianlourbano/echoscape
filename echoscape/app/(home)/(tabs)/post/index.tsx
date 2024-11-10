@@ -25,6 +25,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { AudioPlayer } from "@/components/Audio/AudioPlayer";
 import { IconButton } from "react-native-paper";
+import { updateLevelInfo } from "@/utils/level/level";
 
 type AudioItem = {
     id: string;
@@ -92,7 +93,14 @@ export default function Page({}) {
         const dir = await getUserTmpUri();
         const recordings = await FileSystem.readDirectoryAsync(dir);
 
-        const sorted = recordings.sort((a, b) => {
+        // filter out non-audio files
+        const audioRegex = /.*\.m4a/;
+        const audioFiles = recordings.filter((recording) =>
+            audioRegex.test(recording)
+        );
+        
+
+        const sorted = audioFiles.sort((a, b) => {
             return (
                 new Date(b.split("-")[1]).getTime() -
                 new Date(a.split("-")[1]).getTime()
@@ -182,6 +190,8 @@ export default function Page({}) {
 
             console.log("[AUDIO UP] Audio uploaded!");
 
+            await updateLevelInfo(20);
+
             loadRecordings();
         } else {
             console.log(
@@ -246,7 +256,7 @@ export default function Page({}) {
                     </View>
                 </ScrollView>
             </View>
-            <Animated.View className="h-[27%]" layout={LinearTransition}>
+            <View className="h-[27%]">
                 <GestureHandlerRootView>
                     <Recorder
                         isRecording={isRecording}
@@ -257,12 +267,7 @@ export default function Page({}) {
                         onNewAudioReady={() => loadRecordings()}
                     />
                 </GestureHandlerRootView>
-            </Animated.View>
-            {/* {!isRecording && (
-                <Animated.Text className="text-center font-bold text-white text-4xl" exiting={FadeOut} entering={FadeIn} >
-                    Record Audio!
-                </Animated.Text>
-            )} */}
+            </View>
         </PageContainer>
     );
 }

@@ -132,6 +132,7 @@ sends to overpass the query in input
 returns a promise which in turn becomes overpass response
 */
 export async function fetchOverpass(query) {
+    console.log("[DEBUG fetchOverpass] process.env.EXPO_PUBLIC_OVERPASS_API_URL: ", process.env.EXPO_PUBLIC_OVERPASS_API_URL)
     try {
         const response = await fetch(process.env.EXPO_PUBLIC_OVERPASS_API_URL, {
             method: "POST",
@@ -140,6 +141,8 @@ export async function fetchOverpass(query) {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
         });
+
+        console.log("[DEBUG fetchOverpass] response.status: ", response.status);
 
         const data = await response.json();
         //console.log(data);
@@ -257,14 +260,13 @@ export async function getCoordinatesName(
 export const usePOIs = (region: Region) => {
     const oldBBox = useRef(null);
 
-
     // node["amenity"="place_of_worship"]["name"]["wikipedia"];
     // node["historic"]["name"]["wikipedia"];
     // node["tourism"="museum"]["name"]["wikipedia"];
     // node["tourism"="gallery"]["name"]["wikipedia"];
     // node["building"="government"]["name"]["wikipedia"];
     // node["leisure"~"^(park|garden)$"]["name"]["wikipedia"];
-    
+
     const fetcher = useCallback(
         async (url: string | URL, { arg }: { arg: BBox }) => {
             return await fetch(url, {
@@ -311,7 +313,10 @@ export const usePOIs = (region: Region) => {
                     return data
                 })
                 .then((res) => res.json())
-                .then(data => {console.log("DEBUG DATA RICHIESTA BBOX: ", data); return data})
+                .then((data) => {
+                    console.log("DEBUG DATA RICHIESTA BBOX: ", data);
+                    return data;
+                })
                 .then((data) => data.elements)
                 .then((elements) => {
                     return elements.map((element, index) => {
@@ -322,7 +327,7 @@ export const usePOIs = (region: Region) => {
                                 type: "poi",
                                 id: "poi-" + index,
                                 wikidata: element.tags?.wikidata,
-                                wikipedia: element.tags?.wikipedia || null
+                                wikipedia: element.tags?.wikipedia || null,
                             }
                         );
                     });
@@ -348,8 +353,7 @@ export const usePOIs = (region: Region) => {
             // console.log("DEBUG USEPOIS: ", hasBBoxChangedSignificantly(oldBBox.current, newBBox), zoomLevel)
             //console.log("DEBUG USEPOIS oldbbox: ", oldBBox.current)
             return;
-        }
-        else {
+        } else {
             console.debug(
                 "BBox has changed significantly, triggering overpass request with"
             );
@@ -365,8 +369,11 @@ export const usePOIs = (region: Region) => {
     };
 };
 
-async function fetchWikipediaDescription(title: string, language="it"): Promise<string> {
-    if(!title) {
+async function fetchWikipediaDescription(
+    title: string,
+    language = "it"
+): Promise<string> {
+    if (!title) {
         return "No short description available";
     }
 
@@ -400,14 +407,17 @@ async function fetchWikipediaDescription(title: string, language="it"): Promise<
         return "No short description available";
     }
     // @ts-ignore
-    const description = (page.extract as string) || "No short description available";
+    const description =
+        (page.extract as string) || "No short description available";
 
     return description.replace(/<[^>]*>/g, "");
 }
 
 export function useWIKI(wikidataID: string, lang: string) {
     const [wikiurl, setWikiurl] = useState<string | null>(null);
-    const [description, setDescription] = useState<string>("No short description available");
+    const [description, setDescription] = useState<string>(
+        "No short description available"
+    );
 
     const fetcher = useCallback(async () => {
         if (!wikidataID) {
@@ -420,7 +430,7 @@ export function useWIKI(wikidataID: string, lang: string) {
         const params = new URLSearchParams();
         params.append("action", "wbgetentities");
         params.append("props", "sitelinks");
-        params.append("props", "sitelinks/urls")
+        params.append("props", "sitelinks/urls");
         params.append("ids", wikidataID);
         params.append("sitefilter", lang + "wiki");
         params.append("format", "json");
@@ -428,24 +438,23 @@ export function useWIKI(wikidataID: string, lang: string) {
         const response = await fetch(`${baseurl}?${params.toString()}`);
         const data = await response.json();
 
-        if(data.entities) {
-
-            const wikiurl = data.entities[wikidataID].sitelinks[lang + "wiki"]?.url;
-            const title = data.entities[wikidataID].sitelinks[lang + "wiki"]?.title;
+        if (data.entities) {
+            const wikiurl =
+                data.entities[wikidataID].sitelinks[lang + "wiki"]?.url;
+            const title =
+                data.entities[wikidataID].sitelinks[lang + "wiki"]?.title;
             setWikiurl(wikiurl);
 
             const desc = await fetchWikipediaDescription(title, lang);
 
             setDescription(desc);
 
-            if(desc === "No short description available")
-                return "no-desc"
+            if (desc === "No short description available") return "no-desc";
 
             return "desc";
         }
 
         return null;
-
     }, [wikidataID, lang]);
 
     const { data, isLoading } = useSWR("wikidata", fetcher, {
@@ -461,7 +470,6 @@ export function useWIKI(wikidataID: string, lang: string) {
         description,
         isLoading,
     };
-
 }
 
 /*

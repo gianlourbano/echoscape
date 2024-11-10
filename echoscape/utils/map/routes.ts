@@ -5,11 +5,19 @@ fetches a route from open street map
 the optional function can be used when the function is called in react components
 otherwise it just prints the result and prints the coordinates of the nodes
 */
-export const fetchRoute = async (startLat, startLng, endLat, endLng, setRouteCoordinates?: ([]) => void) => {
+export const fetchRoute = async (
+    startLat,
+    startLng,
+    endLat,
+    endLng,
+    setRouteCoordinates?: ([]) => void
+) => {
     try {
+        console.log("[DEBUG fetchRoute] startLat: ", startLat);
         const response = await fetch(
             `${process.env.EXPO_PUBLIC_OSRM_API_URL}/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`
         );
+        console.log("[DEBUG fetchRoute] response.status: ", response.status);
         const data = await response.json();
         //console.log(JSON.stringify(data, null, 2));
         const routeCoords = data.routes[0].geometry.coordinates.map(
@@ -19,7 +27,7 @@ export const fetchRoute = async (startLat, startLng, endLat, endLng, setRouteCoo
             })
         );
         //setRouteCoordinates(routeCoords);
-        return routeCoords
+        return routeCoords;
     } catch (error) {
         console.error(error);
     }
@@ -31,7 +39,13 @@ i made it then i realized it's useless
 given the response to overpass request, returns a list of LatLng objects containing the node of the route
 */
 const extractCoordinates = (data: any): LatLng[] => {
-    if (!data || !data.routes || !data.routes[0] || !data.routes[0].geometry || !data.routes[0].geometry.coordinates) {
+    if (
+        !data ||
+        !data.routes ||
+        !data.routes[0] ||
+        !data.routes[0].geometry ||
+        !data.routes[0].geometry.coordinates
+    ) {
         return [];
     }
 
@@ -42,16 +56,19 @@ const extractCoordinates = (data: any): LatLng[] => {
     }));
 };
 
-
 /*
 given starting point and ending point, 
 returns a list of LatLng objects of the route fetched by overpass from start point to end point
 */
-export async function getRouteNodes(startLat: number, startLng: number, endLat: number, endLng: number): Promise<LatLng[]> {
-    const routeFetched = await fetchRoute(startLat, startLng, endLat, endLng)
-    return routeFetched
+export async function getRouteNodes(
+    startLat: number,
+    startLng: number,
+    endLat: number,
+    endLng: number
+): Promise<LatLng[]> {
+    const routeFetched = await fetchRoute(startLat, startLng, endLat, endLng);
+    return routeFetched;
 }
-
 
 /*
 takes in input two points on the map, latitude and longitude
@@ -60,14 +77,17 @@ returns a distance between the points in meters
 export function haversineDistance(point1: LatLng, point2: LatLng): number {
     const R = 6371e3; // Raggio della Terra in metri
 
-    const lat1 = point1.latitude * Math.PI / 180; // conversione in radianti
-    const lat2 = point2.latitude * Math.PI / 180;
-    const deltaLat = (point2.latitude - point1.latitude) * Math.PI / 180;
-    const deltaLon = (point2.longitude - point1.longitude) * Math.PI / 180;
+    const lat1 = (point1.latitude * Math.PI) / 180; // conversione in radianti
+    const lat2 = (point2.latitude * Math.PI) / 180;
+    const deltaLat = ((point2.latitude - point1.latitude) * Math.PI) / 180;
+    const deltaLon = ((point2.longitude - point1.longitude) * Math.PI) / 180;
 
-    const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-              Math.cos(lat1) * Math.cos(lat2) *
-              Math.sin(deltaLon / 2) * Math.sin(deltaLon / 2);
+    const a =
+        Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+        Math.cos(lat1) *
+            Math.cos(lat2) *
+            Math.sin(deltaLon / 2) *
+            Math.sin(deltaLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     const distance = R * c; // distanza in metri
@@ -79,11 +99,11 @@ takes in input two arrays: one containing the nodes of a path, and one containin
 returns an array of pairs, a node and a POI, matched to be the smallest distance pair of the arrays
 */
 export function matchPOIsToNodes(
-    POIs: LatLng[], 
-    mapNodes: LatLng[], 
+    POIs: LatLng[],
+    mapNodes: LatLng[],
     maxDistance: number = 100
-): { node: LatLng, POI: LatLng }[] {
-    const result: { node: LatLng, POI: LatLng }[] = [];
+): { node: LatLng; POI: LatLng }[] {
+    const result: { node: LatLng; POI: LatLng }[] = [];
 
     // Iteriamo su una copia dell'array dei punti d'interesse, così possiamo rimuovere elementi
     const POIsCopy = [...POIs];

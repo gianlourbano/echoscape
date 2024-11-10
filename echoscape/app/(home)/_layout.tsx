@@ -35,6 +35,7 @@ export default function App() {
             <Stack.Screen name="poi/[poi]" options={{ presentation: "modal" }} />
             <Stack.Screen name="debug/index" options={{presentation: "modal"}} />
             <Stack.Screen name="report/index" options={{presentation: "modal"}} />
+            <Stack.Screen name="settings/index" options={{presentation: "card"}} />
         </Stack>
     );
 }
