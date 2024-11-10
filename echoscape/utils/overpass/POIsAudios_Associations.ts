@@ -30,7 +30,7 @@ returns all audios with the same coordinates
 
 useful to retrieve audios associated with a POI
 */
-async function getAudiosFromPoint(coordinate: LatLng) {
+export async function getAudiosFromPoint(coordinate: LatLng) {
     const token = await ss_get("token")
     //TODO: CACHEDFETCH NON HA SENSO NON VA BENE
     const audios = await fetch(`${process.env.EXPO_PUBLIC_BACKEND_BASE_URL}/audio/all`,

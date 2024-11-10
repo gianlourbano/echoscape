@@ -1,5 +1,5 @@
 import PageContainer from "@/components/PageContainer";
-import { useLocalSearchParams } from "expo-router";
+import { Href, Link, useLocalSearchParams } from "expo-router";
 import { View, Text, ScrollView } from "react-native";
 import { useFetch } from "@/hooks/useFetch";
 import { useAuth } from "@/utils/auth/AuthProvider";
@@ -7,11 +7,15 @@ import { useAudioDB } from "@/utils/sql/sql";
 import { useState } from "react";
 import { AudioPlayer } from "@/components/Audio/AudioPlayer";
 import { Pie, PolarChart } from "victory-native";
+import { getPOIsAssociatedToPoint } from "@/utils/overpass/POIsAudios_Associations";
+import { POIDetailsObjToURL } from "../poi/[poi]";
 
 // TODO: add charts and styling
 
 interface BackendData {
     creator_username: string;
+    latitude: number;
+    longitude: number;
     tags: {
         bpm: number;
         danceability: number;
@@ -51,10 +55,22 @@ export default function SongPage() {
     const { getAudioFromBackendID } = useAudioDB();
     const [localURI, setLocalURI] = useState<string | null>(null);
 
+    const [associatedPOIs, setAssociatedPOIs] = useState<{
+        id: number,
+        lat: Number,
+        lon: number,
+        tags: {
+            name: string,
+            wikidata: string,
+            wikipedia: string
+        }
+    }[]>()
+
     const { data, error, isLoading }: useFetchData<BackendData> = useFetch(
         `/audio/${songid}`,
         {
             postProcess: async (data: BackendData) => {
+                //console.log("DEBUG POSTPROCESS SONGID DATA: ", data)
                 if (data.creator_username === user.username) {
                     data.creator_username = "You";
                     setLocalURI(await getAudioFromBackendID(Number(songid)));
@@ -109,11 +125,24 @@ export default function SongPage() {
                     .map(([key, value]) => {
                         return { x: key, y: value };
                     });
+                
+                const fetchedPOIs = await getPOIsAssociatedToPoint({
+                    latitude: data.latitude,
+                    longitude: data. longitude
+                })
+                setAssociatedPOIs(
+                    fetchedPOIs
+                )
+                console.log("DEBUG FETCHEDPOIS: ", fetchedPOIs)
 
                 return data;
             },
         }
     );
+
+    const [poiURL, setPoiURL] = useState<String>("")
+
+
 
     if(isLoading) {
         return <View className="h-full bg-zinc-700"></View>
@@ -131,7 +160,9 @@ export default function SongPage() {
                     by {data.creator_username}
                 </Text>
             </Text>
+            
             <ScrollView>
+                
                 <View className="flex flex-col gap-4 w-full h-full">
                     <View className="flex flex-row gap-4 w-full">
                         <View className="bg-zinc-800 rounded-lg  p-4">
@@ -160,6 +191,31 @@ export default function SongPage() {
                         </Text>
                     </View>
                     {localURI && <AudioPlayer uri={localURI} />}
+                    <View className="bg-zinc-800 rounded-lg p-4">
+                    <Text className="text-4xl font-bold text-green-600">
+                        Associated POI
+                    </Text>
+                        {associatedPOIs ?
+                        <Link className="text-white"
+                            href={
+                                POIDetailsObjToURL({
+                                    poi: String(associatedPOIs[0].id),
+                                    name: associatedPOIs[0].tags.name,
+                                    wikidata: associatedPOIs[0].tags.wikidata,
+                                    wikipedia: associatedPOIs[0].tags.wikipedia,
+                                    latitude: associatedPOIs[0].lat.toString(),
+                                    longitude: associatedPOIs[0].lon.toString(),
+                                }) as unknown as Href<string>
+                            }
+                        >
+                            {associatedPOIs[0].tags.name}
+                        </Link>
+                        :
+                        <></>
+                        }
+
+
+                    </View>
                     <View className="bg-zinc-800 rounded-lg p-4">
                         <Text className="text-4xl font-bold text-green-600">
                             Genres
@@ -251,6 +307,8 @@ export default function SongPage() {
                     </View>
                     <View className="h-20" />
                 </View>
+                
+
             </ScrollView>
         </PageContainer>
     );

@@ -103,6 +103,22 @@ export default function POIDetailsPage({}) {
     const { poi, name, wikidata, wikipedia, latitude, longitude } =
         useLocalSearchParams<POIDetailsPageProps>();
 
+    const [associatedAudios, setAssociatedAudios] = useState<{
+        latitude: number,
+        longitude: number,
+        id: number
+    }[]>()
+    useEffect(() => {
+        (async () => {
+            const fetchedAudios = await getAudiosFromPoint(
+                {latitude: parseFloat(latitude), longitude: parseFloat(longitude)}
+            )
+            setAssociatedAudios(fetchedAudios)
+            console.log("DEBUG FETCHED AUDIOS: ",fetchedAudios)
+        
+        })()
+    }, [])
+
     return (
         <PageContainer className="p-0 h-full" safe>
             <POIImage wikidata={wikidata} />
@@ -132,9 +148,21 @@ export default function POIDetailsPage({}) {
                             <Text className="text-xl font-bold text-green-600">
                                 Associated Audios
                             </Text>
-                            <Text className="text-white">
-                                Empty! Be the first one to associate an audio!
-                            </Text>
+                            {associatedAudios && associatedAudios.map((audio, index) => {
+                                return (
+                                    <View key={audio.id} className="">
+                                        <Text className="text-lg text-green-600 font-bold">
+                                            Audio n. {index + 1}
+                                        </Text>
+                                        <Link
+                                            href={`/song/${audio.id}`} 
+                                            className="text-white">
+                                            Go to audio page
+                                        </Link>
+                                    </View>
+                                )
+                            })}
+                            
                         </View>
                     </View>
                 </ScrollView>
@@ -153,6 +181,7 @@ import { TouchableOpacity } from "react-native";
 import { Icon, IconButton } from "react-native-paper";
 import { useLocation } from "@/utils/location/location";
 import { haversineDistance } from "@/utils/map/routes";
+import { getAudiosFromPoint } from "@/utils/overpass/POIsAudios_Associations";
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
